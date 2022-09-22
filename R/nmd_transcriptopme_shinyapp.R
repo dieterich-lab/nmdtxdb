@@ -206,7 +206,7 @@ ui <- semanticPage(
       ),
       tabset(
         tabs = list(
-          # list(menu = "Gene expression", content = reactableOutput("gene_view") %>% shinycssloaders::withSpinner(), id = "gene_view"),
+          list(menu = "Gene expression", content = reactableOutput("gene_view") %>% shinycssloaders::withSpinner(), id = "gene_view"),
           list(menu = "Transcript table", content = plotOutput("annotation") %>% shinycssloaders::withSpinner(), id = "tx_tab"),
           list(menu = "Advanced view", content = mod_phase1_ui("mod_phase1"), id = "advanced_tab")
         ),
@@ -259,6 +259,36 @@ server <- function(input, output, session) {
     NULL
   })
 
+  output$gene_view <- renderReactable({
+
+    tbl(conn, 'anno') %>%
+      select(gene_id, gene_name) %>%
+      # problem:
+      filter(gene_id == local(input$gene_select)) %>%
+      distinct() %>%
+      left_join(tbl(conn, "dge")) %>%
+      select(contrasts, log2FoldChange, padj) %>%
+      collect() %>%
+      mutate_at(vars(padj, log2FoldChange), ~format(round(., digits=2), nsmall = 2)) %>%
+      reactable(
+        .,
+        highlight = TRUE,
+        wrap = FALSE,
+        rowStyle = list(cursor = "pointer"),
+        theme = reactableTheme(
+          stripedColor = "#f6f8fa",
+          highlightColor = "#f0f5f9",
+          cellPadding = "8px 12px",
+          rowSelectedStyle = list(
+            backgroundColor = "#eee",
+            boxShadow = "inset 2px 0 0 0 #FF0000"
+          )
+        ),
+        defaultColDef = colDef(width = 140)
+      )
+  })
+
+
   observeEvent(gene_info(), ignoreNULL = TRUE, ignoreInit = TRUE, {
     gtf <- gtf()
     future({
@@ -289,7 +319,7 @@ server <- function(input, output, session) {
     req(annotation())
   })
 
-  mod_phase1_server("mod_phase1", conn)
+  mod_phase1_server("mod_phase1", conn, input$gene_select)
 }
 
 #' phase1 UI Function
@@ -329,7 +359,7 @@ mod_phase1_ui <- function(id) {
 #' @import stringr
 #' @noRd
 # mod_phase1_server <- function(id, conn, res_auth) {
-mod_phase1_server <- function(id, conn) {
+mod_phase1_server <- function(id, conn, gene_id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     anno <- tbl(conn, "anno")
@@ -504,28 +534,6 @@ mod_phase1_server <- function(id, conn) {
         )
     })
 
-    # output$gene_view <- renderReactable({
-    #   tbl(conn, "dge") %>%
-    #     filter(gene_id == local(input$gene_select)) %>%
-    #     select(contrasts, gene_id, log2FoldChange, padj) %>%
-    #     reactable(
-    #       defaultPageSize = 9,
-    #       compact = TRUE,
-    #       highlight = TRUE,
-    #       wrap = FALSE,
-    #       rowStyle = list(cursor = "pointer"),
-    #       theme = reactableTheme(
-    #         stripedColor = "#f6f8fa",
-    #         highlightColor = "#f0f5f9",
-    #         cellPadding = "8px 12px",
-    #         rowSelectedStyle = list(
-    #           backgroundColor = "#eee",
-    #           boxShadow = "inset 2px 0 0 0 #FF0000"
-    #         )
-    #       ),
-    #       defaultColDef = colDef(width = 100)
-    #     )
-    # })
 
     output$trancript_proportions <- renderPlotly({
       i <- getReactableState("table_transcript", "selected")
@@ -609,7 +617,6 @@ mod_phase1_server <- function(id, conn) {
         theme_minimal() +
         labs(y = "") +
         theme(
-          # axis.text.y = element_blank(),
           axis.ticks = element_blank()
         )
     })
