@@ -65,4 +65,3 @@ RUN if [ "${ENABLE_JUPYTER}" = "true" ]; then \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
 
 # [Optional] Uncomment this section to install additional R packages.
-# RUN install2.r --error --skipinstalled --ncpus -1 <your-package-list-here>

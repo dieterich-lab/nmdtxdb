@@ -3,12 +3,13 @@
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import shiny.semantic
 #' @noRd
 app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
-    fluidPage(
-      h1("nmdtx")
+     semanticPage(
+      mod_parent_ui('parent_ui')
     )
   )
 }
