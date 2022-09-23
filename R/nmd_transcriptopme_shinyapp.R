@@ -1,4 +1,4 @@
-options(shiny.autoreload = TRUE, warn = 2, shiny.error = recover)
+options(shiny.autoreload = TRUE, warn = 0)
 suppressPackageStartupMessages({
   library(shiny)
   library(promises)
@@ -86,7 +86,6 @@ plot_annotation <- function(gtf) {
     theme_minimal() +
     labs(y = "") +
     theme(
-      # axis.text.y = element_blank(),
       axis.ticks = element_blank(),
       legend.position = c(0.87, 0.75)
     )
@@ -117,7 +116,7 @@ adv_grid <- grid_template(
       c("bottom_left", "bottom_mid", "bottom_right")
     ),
     rows_height = c("50%", "50%"),
-    cols_width = c("33%", "33%", "34%")
+    cols_width = c("20%", "30%", "50%")
   )
 )
 
@@ -131,11 +130,12 @@ render_gene_card <- function(gene_id) {
   transcripts <- tbl(conn, "gtf") %>%
     filter(type == "transcript", gene_id == !!gene_id) %>%
     collect()
+
   dge_l2fc <- tbl(conn, "dge") %>%
     filter(gene_id == !!gene_id) %>%
     collect() %>%
     pull(log2FoldChange)
-
+  message(dge_l2fc)
   is_nmd <- transcripts %>% with(table(transcript_biotype == "nonsense_mediated_decay"))
   n_nmd <- ifelse(length(is_nmd) == 2, is_nmd[2], 0)
   card(
@@ -187,10 +187,10 @@ render_gene_card <- function(gene_id) {
 ui <- semanticPage(
   sidebar_layout(
     sidebar_panel(
-      width = 2,
+      width = 3,
       selectizeInput(
         inputId = "gene_select",
-        label = h2("Select a gene symbol"),
+        label = h2("Select a gene:"),
         choices = NULL,
         selected = NULL,
         multiple = FALSE,
@@ -208,7 +208,7 @@ ui <- semanticPage(
         tabs = list(
           list(menu = "Gene expression", content = reactableOutput("gene_view") %>% shinycssloaders::withSpinner(), id = "gene_view"),
           list(menu = "Transcript table", content = plotOutput("annotation") %>% shinycssloaders::withSpinner(), id = "tx_tab"),
-          list(menu = "Advanced view", content = mod_phase1_ui("mod_phase1"), id = "advanced_tab")
+          list(menu = "Advanced view", content = mod_phase1_ui("mod_phase1") %>% shinycssloaders::withSpinner(), id = "advanced_tab")
         ),
         active = "second_tab",
         id = "transcript_tabset"
@@ -218,19 +218,15 @@ ui <- semanticPage(
 )
 
 server <- function(input, output, session) {
-  output$text <- renderText({
-    validate(need(input$gene_select, "Waiting selection"))
-    paste("gene", input$gene_select)
-  })
-
   # debounce - https://shiny.rstudio.com/reference/shiny/1.0.4/debounce.html
   updateSelectizeInput(
     session,
     "gene_select",
-    selected = NULL,
+    selected = FALSE,
     choices = tbl(conn, "gtf") %>% pull("gene_name") %>% unique() %>% sort(),
     server = TRUE
   )
+
 
   gtf <- reactiveVal()
   gene_info <- reactiveVal()
@@ -243,7 +239,7 @@ server <- function(input, output, session) {
       if (is.na(input$gene_select) | input$gene_select == "") {
         return(NULL)
       }
-      message(input$gene_select)
+      mod_phase1_server("mod_phase1", conn, input$gene_select)
       tbl(conn, "gtf") %>%
         filter(gene_name == local(input$gene_select)) %>%
         collect()
@@ -260,16 +256,15 @@ server <- function(input, output, session) {
   })
 
   output$gene_view <- renderReactable({
-
-    tbl(conn, 'anno') %>%
+    validate(need(input$gene_select, "\nWaiting selection"))
+    tbl(conn, "anno") %>%
       select(gene_id, gene_name) %>%
-      # problem:
-      filter(gene_id == local(input$gene_select)) %>%
+      dplyr::filter(gene_id == local(gtf()[[1, "gene_id"]])) %>%
       distinct() %>%
       left_join(tbl(conn, "dge")) %>%
       select(contrasts, log2FoldChange, padj) %>%
       collect() %>%
-      mutate_at(vars(padj, log2FoldChange), ~format(round(., digits=2), nsmall = 2)) %>%
+      mutate_at(vars(padj, log2FoldChange), ~ format(round(., digits = 2), nsmall = 2)) %>%
       reactable(
         .,
         highlight = TRUE,
@@ -284,7 +279,7 @@ server <- function(input, output, session) {
             boxShadow = "inset 2px 0 0 0 #FF0000"
           )
         ),
-        defaultColDef = colDef(width = 140)
+        defaultColDef = colDef(width = 160)
       )
   })
 
@@ -298,7 +293,6 @@ server <- function(input, output, session) {
       annotation()
 
     future({
-      # plot_coverage(gtf)
       coverage(NULL)
       Sys.sleep(5)
       plot_annotation(gtf)
@@ -308,6 +302,7 @@ server <- function(input, output, session) {
   })
 
   output$gene_info <- renderUI({
+    validate(need(input$gene_select, "Waiting selection"))
     req(gene_info())
   })
 
@@ -319,7 +314,7 @@ server <- function(input, output, session) {
     req(annotation())
   })
 
-  mod_phase1_server("mod_phase1", conn, input$gene_select)
+
 }
 
 #' phase1 UI Function
@@ -340,8 +335,7 @@ mod_phase1_ui <- function(id) {
   grid(
     adv_grid,
     top_left = reactableOutput(ns("table_transcript")),
-    # top_mid = plotlyOutput(ns("p1")),
-    top_right = plotlyOutput(ns("p2")),
+    top_right = plotlyOutput(ns("dtu_volcano")),
     bottom_left = plotlyOutput(ns("gene_counts")),
     bottom_mid = plotlyOutput(ns("trancript_proportions")),
     bottom_right = plotOutput(ns("gene_structure"))
@@ -358,145 +352,116 @@ mod_phase1_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-# mod_phase1_server <- function(id, conn, res_auth) {
-mod_phase1_server <- function(id, conn, gene_id) {
+mod_phase1_server <- function(id, conn, select) {
   moduleServer(id, function(input, output, session) {
-    ns <- session$ns
-    anno <- tbl(conn, "anno")
 
-    is_nmd <- tbl(conn, "gtf") %>%
-      filter(type == "transcript", transcript_biotype == "nonsense_mediated_decay") %>%
-      pull(transcript_id)
-
-    dge <- tbl(conn, "dge") %>%
-      filter(padj < 0.05) %>%
-      dplyr::select(contrasts, gene_id, log2FoldChange, pvalue, padj) %>%
-      left_join(anno) %>%
-      collect()
-
-
-    dtu <- tbl(conn, "dtu") %>%
-      filter(padj < 0.05) %>%
-      dplyr::select(
-        genomicData,
-        contrasts,
-        gene_id,
-        transcript_id,
-        padj,
-        log2fold_SMG6kd_SMG7ko_control,
-        log2fold_SMG5kd_SMG7ko_control
-      ) %>%
-      mutate(is_nmd = transcript_id %in% is_nmd) %>%
-      left_join(anno) %>%
-      collect() %>%
-      mutate(genomicData = str_sub(genomicData, 1, -3))
-
-    tx_shared <- dtu %>%
-      dplyr::select(gene_name, transcript_name, everything()) %>%
-      SharedData$new(data = ., key = ~gene_id, group = "gene")
-    gene_shared <- SharedData$new(dge, key = ~gene_id, group = "gene")
+    anno <- reactive({
+      validate(need(select, message = "Waiting selection"))
+      tbl(conn, "anno") %>%
+        dplyr::filter(gene_name == !!select)
+    })
 
     output$table_transcript <- renderReactable({
-      tx_shared %>%
-        reactable(
-          defaultPageSize = 9,
-          compact = TRUE,
-          highlight = TRUE,
-          selection = "single",
-          onClick = "select",
-          wrap = FALSE,
-          rowStyle = list(cursor = "pointer"),
-          theme = reactableTheme(
-            stripedColor = "#f6f8fa",
-            highlightColor = "#f0f5f9",
-            cellPadding = "8px 12px",
-            rowSelectedStyle = list(
-              backgroundColor = "#eee",
-              boxShadow = "inset 2px 0 0 0 #FF0000"
-            )
+      anno() %>%
+        select(gene_id, gene_name) %>%
+        distinct() %>%
+        left_join(tbl(conn, "dtu")) %>%
+        dplyr::select(
+          genomicData,
+          contrasts,
+          gene_id,
+          transcript_id,
+          padj,
+          log2fold_SMG6kd_SMG7ko_control,
+          log2fold_SMG5kd_SMG7ko_control
+        ) %>%
+        # mutate(is_nmd = transcript_id %in% is_nmd) %>%
+        collect() %>%
+        mutate(genomicData = str_sub(genomicData, 1, -3))  %>%
+      reactable(
+        .,
+        defaultPageSize = 9,
+        compact = TRUE,
+        highlight = TRUE,
+        wrap = FALSE,
+        rowStyle = list(cursor = "pointer"),
+        theme = reactableTheme(
+          stripedColor = "#f6f8fa",
+          highlightColor = "#f0f5f9",
+          cellPadding = "8px 12px",
+          rowSelectedStyle = list(
+            backgroundColor = "#eee",
+            boxShadow = "inset 2px 0 0 0 #FF0000"
+          )
+        ),
+        defaultColDef = colDef(width = 80),
+        columns = list(
+          contrasts = colDef(
+            show = FALSE
           ),
-          defaultColDef = colDef(width = 100),
-          columns = list(
-            contrasts = colDef(
-              show = FALSE
-            ),
-            transcript_name = colDef(
-              filterable = TRUE,
-              width = 160
-            ),
-            transcript_id = colDef(
-              show = FALSE
-            ),
-            gene_name = colDef(
-              filterable = TRUE,
-              width = 120
-            ),
-            log2fold_SMG6kd_SMG7ko_control = colDef(
-              name = "l2fc_SMG67KD",
-              format = colFormat(digits = 3)
-            ),
-            log2fold_SMG5kd_SMG7ko_control = colDef(
-              name = "l2fc_SMG57KD",
-              format = colFormat(digits = 3)
-            ),
-            padj = colDef(
-              format = colFormat(digits = 3)
-            ),
-            gene_id = colDef(
-              name = "ensembl",
-              html = TRUE,
-              cell = JS("function(cellInfo) {
+          transcript_name = colDef(
+            filterable = TRUE,
+            width = 160
+          ),
+          transcript_id = colDef(
+            show = FALSE
+          ),
+          gene_name = colDef(
+            filterable = TRUE,
+            width = 120
+          ),
+          log2fold_SMG6kd_SMG7ko_control = colDef(
+            name = "l2fc_SMG67KD",
+            format = colFormat(digits = 3)
+          ),
+          log2fold_SMG5kd_SMG7ko_control = colDef(
+            name = "l2fc_SMG57KD",
+            format = colFormat(digits = 3)
+          ),
+          padj = colDef(
+            format = colFormat(digits = 3)
+          ),
+          gene_id = colDef(
+            name = "ensembl",
+            html = TRUE,
+            width = 140,
+            cell = JS("function(cellInfo) {
               const url = 'https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=' + cellInfo.value
               return '<a href=\"' + url + '\" target=\"_blank\">' + cellInfo.value + '</a>'
             }"),
-            ),
-            genomicData = colDef(
-              name = "ucsc",
-              html = TRUE,
-              cell = JS("function(cellInfo) {
+          ),
+          genomicData = colDef(
+            name = "ucsc",
+            html = TRUE,
+            width = 160,
+            cell = JS("function(cellInfo) {
               const url = 'http://genome-euro.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=chr' + cellInfo.value
               return '<a href=\"' + url + '\" target=\"_blank\">' + cellInfo.value + '</a>'
             }")
-            )
           )
         )
+      )
     })
 
-    output$p1 <- renderPlotly({
-      plot_ly(
-        gene_shared,
-        x = ~log2FoldChange,
-        y = ~ -log10_or_max(padj),
-        text = ~ paste0(
-          "<b>", gene_name, "</b>",
-          "<br><i>contrasts</i>: ", contrasts
-        ),
-        hoverinfo = "text"
-      ) %>%
-        add_markers() %>%
-        highlight("plotly_click", "plotly_doubleclick", color = I("red")) %>%
-        layout(
-          title = "DGE volcano",
-          hoverlabel = list(align = "left")
+    output$dtu_volcano <- renderPlotly({
+      tbl(conn, "dtu") %>%
+        collect() %>%
+        plot_ly(
+          .,
+          # color = ~gene_id == unique(anno()$gene_id), #
+          colors = c("gray", "red"),
+          opacity = 0.4,
+          x = ~log2fold_SMG5kd_SMG7ko_control,
+          y = ~ -log10_or_max(padj),
+          text = ~ paste0(
+            "<b>", gene_name, "</b>",
+            "<br><i>transcript_name</i>: ", transcript_name
+          ),
+          hoverinfo = "text"
         ) %>%
-        toWebGL()
-    })
-
-
-    output$p2 <- renderPlotly({
-      plot_ly(
-        tx_shared,
-        x = ~log2fold_SMG5kd_SMG7ko_control,
-        y = ~ -log10_or_max(padj),
-        text = ~ paste0(
-          "<b>", gene_name, "</b>",
-          "<br><i>transcript_name</i>: ", transcript_name
-        ),
-        hoverinfo = "text"
-      ) %>%
         add_markers() %>%
-        highlight("plotly_click", "plotly_doubleclick", color = I("red")) %>%
         layout(
+          showlegend = FALSE,
           title = "DTU volcano",
           hoverlabel = list(align = "left")
         ) %>%
@@ -504,17 +469,14 @@ mod_phase1_server <- function(id, conn, gene_id) {
     })
 
     output$gene_counts <- renderPlotly({
-      i <- getReactableState("table_transcript", "selected")
-      validate(need(!is.na(i),
-        message = "Please select an entry from the table."
-      ))
 
-      gene_id <- tx_shared$data()[[i, "gene_id"]]
-      tbl(conn, "gene_counts") %>%
-        dplyr::filter(gene_id == !!gene_id) %>%
-        tidyr::pivot_longer(-c(gene_id)) %>%
-        mutate(group = str_sub(name, start = 1, end = -3)) %>%
+      anno() %>%
+        select(gene_id, gene_name) %>%
+        distinct() %>%
+        left_join(tbl(conn, "gene_counts")) %>%
         collect() %>%
+        tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
+        mutate(group = str_sub(name, start = 1, end = -3)) %>%
         plot_ly(
           type = "box",
           x = ~group,
@@ -529,28 +491,24 @@ mod_phase1_server <- function(id, conn, gene_id) {
             title = "",
             showticklabels = FALSE
           ),
-          yaxis = list(title = "log10(counts)"),
+          yaxis = list(title = "log10(counts)", rangemode='tozero'),
           legend = list(orientation = "h")
         )
     })
 
 
     output$trancript_proportions <- renderPlotly({
-      i <- getReactableState("table_transcript", "selected")
-      validate(need(!is.na(i),
-        message = "Please select an entry from the table."
-      ))
-      gene_id <- tx_shared$data()[[i, "gene_id"]]
-      tbl(conn, "tx_counts") %>%
-        dplyr::filter(gene_id == !!gene_id) %>%
-        tidyr::pivot_longer(-c(gene_id, transcript_id)) %>%
+      anno() %>%
+        left_join(tbl(conn, "tx_counts")) %>%
+        select(-c(gene_name, transcript_id, gene_id)) %>%
+        tidyr::pivot_longer(-c(transcript_name)) %>%
+        collect() %>%
         mutate(group = str_sub(name, start = 1, end = -3)) %>%
         group_by(name) %>%
-        mutate(total = sum(value, na.rm = TRUE)) %>%
+        mutate(total = sum(value, na.rm=TRUE)) %>%
         filter(total != 0) %>%
         ungroup() %>%
         mutate(usage = value / total) %>%
-        left_join(anno) %>%
         collect() %>%
         plot_ly(
           type = "box",
@@ -561,31 +519,19 @@ mod_phase1_server <- function(id, conn, gene_id) {
           x = ~usage,
           color = ~group,
           colors = c(I("steelblue"), I("gold"), I("forestgreen")),
-          orientation = "h",
-          opacity = 0.8
-        ) %>%
-        layout(
-          # boxmode = "group",
-          title = "Transcript proportion",
-          xaxis = list(title = ""),
-          showlegend = FALSE
-        )
+          orientation = 'h',
+          opacity = 0.8)  %>%
+        layout(boxmode = "group",
+               title = "Transcript proportion",
+               xaxis = list(title = ""),
+               showlegend = FALSE)
+
     })
 
     output$gene_structure <- renderPlot({
-      i <- getReactableState("table_transcript", "selected")
-      validate(need(!is.na(i),
-        message = "Please select an entry from the table."
-      ))
 
-      gene_id <- tx_shared$data()[[i, "gene_id"]]
-
-      # filter for transcripts in the table
-      gtf <- tbl(conn, "gtf") %>%
-        filter(
-          gene_id %in% local(gene_id),
-          type %in% c("exon", "CDS")
-        ) %>%
+      gtf <- anno() %>%
+        left_join(tbl(conn, "gtf")) %>%
         collect()
 
       exons <- gtf %>% dplyr::filter(type == "exon")
