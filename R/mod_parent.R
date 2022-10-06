@@ -3,14 +3,14 @@
 #' @description A shiny Module.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
-#' 
-#' @noRd 
 #'
-#' @importFrom shiny NS tagList 
+#' @noRd
+#'
+#' @importFrom shiny NS tagList
 mod_parent_ui <- function(id){
   ns <- NS(id)
   tagList(
-   
+
   sidebar_layout(
     sidebar_panel(
       width = 2,
@@ -26,7 +26,7 @@ mod_parent_ui <- function(id){
     ),
     main_panel(
       width = 10,
-      div(style = "position:absolute;right:1em;", 
+      div(style = "position:absolute;right:1em;",
           actionButton("help", label = "", icon = icon("question"),
       )),
       tabset(
@@ -38,29 +38,9 @@ mod_parent_ui <- function(id){
         active = "second_tab",
         id = "transcript_tabset"
       )
-  
+
   )
 )
-
- 
-  )
-}
-    
-#' parent Server Functions
-#'
-#' @noRd 
-mod_parent_server <- function(id){
-  moduleServer( id, function(input, output, session){
-    ns <- session$ns
- 
-  })
-}
-    
-## To be copied in the UI
-# mod_parent_ui("parent_1")
-    
-## To be copied in the server
-# mod_parent_server("parent_1")
 
 
 options(shiny.autoreload = TRUE)
@@ -279,7 +259,7 @@ server <- function(input, output, session) {
       coverage(NULL)
       Sys.sleep(5)
       plot_annotation(gtf)
-    
+
     }) %...>% coverage()
 
     NULL
