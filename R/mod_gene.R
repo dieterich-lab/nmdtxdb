@@ -13,8 +13,10 @@ mod_gene_ui <- function(id) {
 
   grid(
     gene_view_grid,
-    left = reactableOutput(ns("gene_exp_table")),
-    right = plotOutput(ns("gene_exp"))
+    left = reactableOutput(ns("gene_exp_table")) %>%
+      shinycssloaders::withSpinner(),
+    right = plotOutput(ns("gene_exp")) %>%
+      shinycssloaders::withSpinner()
   )
 }
 

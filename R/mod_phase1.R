@@ -14,12 +14,12 @@ mod_phase1_ui <- function(id) {
 
   grid(
     adv_grid,
-    top_left = reactableOutput(ns("table_transcript")),
-    top_right = plotlyOutput(ns("dtu_volcano")),
-    bottom_left = plotlyOutput(ns("gene_counts")),
-    bottom_mid = plotlyOutput(ns("trancript_proportions")),
-    bottom_right = plotOutput(ns("gene_structure"))
-  ) %>% shinycssloaders::withSpinner()
+    top_left = reactableOutput(ns("table_transcript")) %>% shinycssloaders::withSpinner(),
+    top_right = plotlyOutput(ns("dtu_volcano")) %>% shinycssloaders::withSpinner(),
+    bottom_left = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
+    bottom_mid = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
+    bottom_right = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner()
+  )
 }
 
 #' phase1 Server Functions
