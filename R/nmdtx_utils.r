@@ -86,9 +86,9 @@ render_gene_card <- function(gene_id) {
       ),
       p(str_glue("NMD isoforms: {n_nmd}/{sum(is_nmd)}")),
       div(
-        str_glue("Up-regulated in {sum(dge_l2fc > 1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
+        str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
         icon("question circle"),
-      ) %>% htmltools::tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 1"),
+      ) %>% htmltools::tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
       # p("Novel transcripts : X/XX"),
       p("Single molecule evidence: X/XX"),
       p(

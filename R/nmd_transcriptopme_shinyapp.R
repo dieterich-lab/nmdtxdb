@@ -37,10 +37,10 @@ ui <- semanticPage(
     ),
     main_panel(
       width = 10,
-      div(
-        style = "position:absolute;right:1em;",
-        actionButton("help", label = "", icon = icon("question"))
-      ),
+      # div(
+      #   style = "position:absolute;right:1em;",
+      #   actionButton("help", label = "", icon = icon("question"))
+      # ),
       tabset(
         tabs = list(
           list(
