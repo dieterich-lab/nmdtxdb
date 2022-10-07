@@ -1,5 +1,6 @@
 library(DBI)
 
+base_path <- "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome"
 
 conn <- dbConnect(
   RPostgres::Postgres(),
@@ -11,7 +12,8 @@ conn <- dbConnect(
 )
 
 dbListTables(conn)
-# none
+
+## DTU ####
 
 dtu <- read_csv("~/repos/NMD-Transcriptome/results/phase1/DEXSeq_dtu.csv.gz")
 dtu <- dtu %>% group_split(contrasts)
@@ -19,20 +21,27 @@ all(dtu[[1]]$transcript_id == dtu[[2]]$transcript_id)
 cols <- c("SMG6kd_SMG7ko", "log2fold_SMG6kd_SMG7ko_control", "countData.7", "countData.8", "countData.9")
 dtu <- cbind(dtu[[1]] %>% dplyr::select(-all_of(cols)), dtu[[2]][cols])
 
+## GTF ####
 gtf <- rtracklayer::import("/biodb/genomes/homo_sapiens/GRCh38_102/GRCh38.102.gtf")
 gtf <- as.data.frame(gtf) %>%
   dplyr::filter(transcript_id %in% unique(dtu$transcript_id))
 
-dge <- read_csv("~/repos/NMD-Transcriptome/results/phase1/DESeq2_dge.csv.gz")
-dge <- dge %>% rename(c("rowname" = "gene_id"))
 
+## DGE ####
+files <-  Sys.glob(file.path(base_path, "dge_results/*.xlsx"))
+
+names(files) <- tools::file_path_sans_ext(basename(files))
+
+dge <- lapply(
+  files,
+  openxlsx::read.xlsx)
+
+names(dge) <- names(files)
+dge <- bind_rows(dge, .id='contrasts')
 dge <- dge %>%
-  mutate(contrasts = recode(
-    contrasts,
-    "group_SMG5kd_SMG7ko_vs_control" = "SMG5kdSMG7KO",
-    "group_SMG6kd_SMG7ko_vs_control" = "SMG6kdSMG7KO"))
+  rename(gene_name=gene, gene_id=SYMBOL)
 
-
+## METADATA ####
 metadata <- readRDS(here('data/metadata.RDS'))
 metadata[1, 1] <- "A006200072_119952"
 metadata <- filter(
