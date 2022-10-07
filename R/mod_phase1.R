@@ -19,7 +19,7 @@ mod_phase1_ui <- function(id) {
     bottom_left = plotlyOutput(ns("gene_counts")),
     bottom_mid = plotlyOutput(ns("trancript_proportions")),
     bottom_right = plotOutput(ns("gene_structure"))
-  )
+  ) %>% shinycssloaders::withSpinner()
 }
 
 #' phase1 Server Functions
@@ -45,7 +45,7 @@ mod_phase1_server <- function(id, conn, select) {
       anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "dtu")) %>%
+        left_join(tbl(conn, "dtu"), by="gene_id")  %>%
         dplyr::select(
           genomicData,
           contrasts,
@@ -160,7 +160,7 @@ mod_phase1_server <- function(id, conn, select) {
       anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "gene_counts")) %>%
+        left_join(tbl(conn, "gene_counts"), by='gene_id') %>%
         collect() %>%
         tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
         mutate(group = str_sub(name, start = 1, end = -3)) %>%
@@ -186,7 +186,7 @@ mod_phase1_server <- function(id, conn, select) {
 
     output$trancript_proportions <- renderPlotly({
       anno() %>%
-        left_join(tbl(conn, "tx_counts")) %>%
+        left_join(tbl(conn, "tx_counts"), by = c("transcript_id", "gene_id")) %>%
         select(-c(gene_name, transcript_id, gene_id)) %>%
         tidyr::pivot_longer(-c(transcript_name)) %>%
         collect() %>%
@@ -218,7 +218,7 @@ mod_phase1_server <- function(id, conn, select) {
     output$gene_structure <- renderPlot({
 
       gtf <- anno() %>%
-        left_join(tbl(conn, "gtf")) %>%
+        left_join(tbl(conn, "gtf"), by = c("transcript_id", "gene_id", "transcript_name", "gene_name")) %>%
         collect()
 
       exons <- gtf %>% dplyr::filter(type == "exon")

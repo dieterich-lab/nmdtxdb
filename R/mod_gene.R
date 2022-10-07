@@ -37,7 +37,7 @@ mod_gene_server <- function(id, conn, select) {
       dge <- anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "dge")) %>%
+        left_join(tbl(conn, "dge"), by='gene_id') %>%
         select(contrasts, log2FoldChange, padj) %>%
         collect()
 
