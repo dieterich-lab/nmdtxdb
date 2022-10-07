@@ -62,7 +62,12 @@ mod_gene_server <- function(id, conn, select) {
               boxShadow = "inset 2px 0 0 0 #FF0000"
             )
           ),
-          defaultColDef = colDef(width = 160)
+          columns = list(
+            contrasts = colDef(
+              width = 200,
+            )
+          ),
+          defaultColDef = colDef(width = 80)
         )
     })
 
@@ -84,15 +89,8 @@ mod_gene_server <- function(id, conn, select) {
         ggplot(., aes(y=contrasts, x=log2FoldChange)) +
         xlim(c(-5, 5)) +
         ylab("Density") +
-        ggridges::geom_density_ridges(alpha=0.5, color=NA) +
+        ggridges::geom_density_ridges(alpha=0.5, color=NA, bandwidth=0.083) +
         ggridges::theme_ridges() +
-        # geom_segment(
-        #   data = gene_l2fc,
-        #   aes(x = log2FoldChange,
-        #       xend = log2FoldChange + 0.1,
-        #       y = contrasts,
-        #       yend = contrasts),
-        #   color = 'red') +
         geom_text(
           data=gene_l2fc,
           aes(label=paste0("↓", !!select)),

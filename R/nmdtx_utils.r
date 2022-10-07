@@ -90,7 +90,7 @@ render_gene_card <- function(gene_id) {
         icon("question circle"),
       ) %>% htmltools::tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
       # p("Novel transcripts : X/XX"),
-      p("Single molecule evidence: X/XX"),
+      # p("Single molecule evidence: X/XX"),
       p(
         "Ensembl: ",
         a(
