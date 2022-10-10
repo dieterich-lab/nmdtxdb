@@ -88,9 +88,9 @@ render_gene_card <- function(gene_id) {
           stringr::str_interp("Also known as: ${paste(parsed$alias, collapse=', ')}")
         )
       ),
-      div(str_glue("NMD isoforms: {n_nmd}/{sum(is_nmd)}")),
+      div(str_glue("NMD isoforms: {n_nmd}/{sum(n_transcripts)}")),
       div(
-        str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{n_transcripts} cohorts"),
+        str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
         icon("question circle"),
       ) %>% htmltools::tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
       # p("Novel transcripts : X/XX"),
@@ -98,7 +98,7 @@ render_gene_card <- function(gene_id) {
         str_glue("Long read evidence: {n_support}/{n_transcripts}"),
         icon("question circle"),
       ) %>% htmltools::tagAppendAttributes(
-        ., "data-tooltip" = "with identical intron chain"),
+        ., "data-tooltip" = "Isoforms with identical intron chain"),
       div(
         "Ensembl: ",
         a(
@@ -183,8 +183,8 @@ gene_view_grid <- grid_template(
 conn <- DBI::dbConnect(
   RPostgres::Postgres(),
   dbname = "nmd_transcriptome",
-  host = "***REMOVED***",
-  port = ***REMOVED***,
-  password = "***REMOVED***",
-  user = "***REMOVED***"
+  host = Sys.getenv("NMD_PGHOST"),
+  port = Sys.getenv("NMD_PGPORT"),
+  password = Sys.getenv("NMD_PGPASSWORD"),
+  user = Sys.getenv("NMD_PGUSER"),
 )

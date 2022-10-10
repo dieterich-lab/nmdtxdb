@@ -21,10 +21,9 @@ mod_transcript_ui <- function(id) {
 
   grid(
     transcript_view_grid,
-    # left = reactableOutput(ns("transcript_table")) %>%
-    #   shinycssloaders::withSpinner(),
-    # right = plotOutput(ns("transcript_structure")) %>%
-    #   shinycssloaders::withSpinner()
+    left = uiOutput(ns('test')) %>% shinycssloaders::withSpinner(),
+    # reactableOutput(ns("transcript_table")) %>%
+    right = uiOutput(ns('test')) %>% shinycssloaders::withSpinner()
   )
 }
 
@@ -36,6 +35,10 @@ mod_transcript_ui <- function(id) {
 #' @noRd
 mod_transcript_server <- function(id, conn, select) {
   moduleServer(id, function(input, output, session) {
-
+    output$test <- renderUI({
+      tagList(
+        textInput("label", "Label")
+      )
+    })
   })
 }

@@ -47,23 +47,27 @@ mod_phase1_server <- function(id, conn, select) {
         distinct() %>%
         left_join(tbl(conn, "dtu"), by="gene_id")  %>%
         dplyr::select(
-          genomicData,
           contrasts,
-          gene_id,
-          transcript_id,
+          transcript_name,
           padj,
           log2fold_SMG6kd_SMG7ko_control,
           log2fold_SMG5kd_SMG7ko_control
         ) %>%
-        # mutate(is_nmd = transcript_id %in% is_nmd) %>%
         collect() %>%
-        mutate(genomicData = str_sub(genomicData, 1, -3))  %>%
         reactable(
           .,
-          defaultPageSize = 9,
-          compact = TRUE,
+          elementId = "adv_view_table",
+          language = reactableLang(
+            filterPlaceholder = 'Filter'),
+          filterable = TRUE,
+          striped = TRUE,
+          defaultSorted = c("padj"),
+          showPageSizeOptions = TRUE,
+          defaultPageSize = 5,
+          pageSizeOptions = c(5, 10, 25, 50),
           highlight = TRUE,
           wrap = FALSE,
+          compact = TRUE,
           rowStyle = list(cursor = "pointer"),
           theme = reactableTheme(
             stripedColor = "#f6f8fa",
@@ -77,47 +81,21 @@ mod_phase1_server <- function(id, conn, select) {
           defaultColDef = colDef(width = 80),
           columns = list(
             contrasts = colDef(
-              show = FALSE
+              width = 150,
             ),
             transcript_name = colDef(
-              filterable = TRUE,
-              width = 160
-            ),
-            transcript_id = colDef(
-              show = FALSE
-            ),
-            gene_name = colDef(
-              filterable = TRUE,
-              width = 120
+              width = 150,
             ),
             log2fold_SMG6kd_SMG7ko_control = colDef(
-              name = "l2fc_SMG67KD",
-              format = colFormat(digits = 3)
+              name = "fc_SMG67KD",
+              format = colFormat(digits = 2)
             ),
             log2fold_SMG5kd_SMG7ko_control = colDef(
-              name = "l2fc_SMG57KD",
-              format = colFormat(digits = 3)
+              name = "fc_SMG57KD",
+              format = colFormat(digits = 2)
             ),
             padj = colDef(
-              format = colFormat(digits = 3)
-            ),
-            gene_id = colDef(
-              name = "ensembl",
-              html = TRUE,
-              width = 140,
-              cell = JS("function(cellInfo) {
-              const url = 'https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=' + cellInfo.value
-              return '<a href=\"' + url + '\" target=\"_blank\">' + cellInfo.value + '</a>'
-            }"),
-            ),
-            genomicData = colDef(
-              name = "ucsc",
-              html = TRUE,
-              width = 160,
-              cell = JS("function(cellInfo) {
-              const url = 'http://genome-euro.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=chr' + cellInfo.value
-              return '<a href=\"' + url + '\" target=\"_blank\">' + cellInfo.value + '</a>'
-            }")
+              format = colFormat(digits = 2)
             )
           )
         )
@@ -129,6 +107,7 @@ mod_phase1_server <- function(id, conn, select) {
         unique()
 
       tbl(conn, "dtu") %>%
+        #filter(padj > 0.05, across(starts_with("log2fold"), ~abs(.x) > 1)) %>%
         collect() %>%
         mutate(selected = ifelse(gene_name == !!select, "T", "F")) %>%
         plot_ly(

@@ -3,13 +3,13 @@ library(tidyverse)
 
 base_path <- "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome"
 
-conn <- dbConnect(
+conn <- DBI::dbConnect(
   RPostgres::Postgres(),
   dbname = "nmd_transcriptome",
-  host = "***REMOVED***",
-  port = ***REMOVED***,
-  password = "***REMOVED***",
-  user = "***REMOVED***"
+  host =  Sys.getenv("NMD_PGHOST"),
+  port =  Sys.getenv("NMD_PGPORT"),
+  password = Sys.getenv("NMD_PGPASSWORD"),
+  user = Sys.getenv("NMD_PGUSER"),
 )
 
 dbListTables(conn)
@@ -21,11 +21,17 @@ has_support <- read.csv(
   row.names = 1)
 
 ## DTU ####
-dtu <- read_csv("/Volumes/beegfs/homes/tbrittoborges/repos/NMD-Transcriptome/results/phase1/DEXSeq_dtu.csv.gz")
-dtu <- dtu %>% group_split(contrasts)
-all(dtu[[1]]$transcript_id == dtu[[2]]$transcript_id)
-cols <- c("SMG6kd_SMG7ko", "log2fold_SMG6kd_SMG7ko_control", "countData.7", "countData.8", "countData.9")
-dtu <- cbind(dtu[[1]] %>% dplyr::select(-all_of(cols)), dtu[[2]][cols])
+files <-  Sys.glob(file.path(base_path, "phase2/results/dtu*.xlsx"))
+names(files) <- tools::file_path_sans_ext(basename(files))
+dtu <- lapply(files, openxlsx::read.xlsx)
+#dtu <- lapply(dtu, tibble::rownames_to_column)
+dtu <- bind_rows(dtu, .id='contrasts')
+dtu <- dtu %>% select(!starts_with("countData"))
+dtu <- dtu %>% select(1:8, starts_with('log2fold_'), 'genomicData')
+dtu <- dtu %>% mutate(
+  log2fold = coalesce(!!! select(., matches("log2fold_|_control$"))))
+dtu <- dtu %>% select(!ends_with('control'))
+dtu <- dtu %>% dplyr::rename(transcript_id = featureID, gene_name=groupID)
 
 ## GTF ####
 # gtf <- rtracklayer::import(

@@ -87,7 +87,6 @@ mod_gene_server <- function(id, conn, select) {
       dge %>%
         mutate(contrasts = forcats::fct_reorder(contrasts, nchar(contrasts))) %>%
         ggplot(., aes(y=contrasts, x=log2FoldChange)) +
-        xlim(c(-5, 5)) +
         ylab("Density") +
         ggridges::geom_density_ridges(alpha=0.5, color=NA, bandwidth=0.083) +
         ggridges::theme_ridges() +
