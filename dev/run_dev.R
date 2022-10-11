@@ -1,4 +1,4 @@
-options(golem.app.prod = FALSE)
+options(golem.app.prod = FALSE, warn = 0)
 options(shiny.port = httpuv::randomPort())
 golem::detach_all_attached()
 golem::document_and_reload()

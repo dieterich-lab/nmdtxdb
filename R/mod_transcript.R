@@ -1,10 +1,6 @@
-transcript_view_grid <- grid_template(
-  default = list(
-    areas = rbind(c("left", "right")),
-    cols_width = c("30%", "auto"),
-    rows_height = c("auto")
-  )
-)
+
+
+
 
 #' transcript view UI Function
 #'
@@ -21,9 +17,9 @@ mod_transcript_ui <- function(id) {
 
   grid(
     transcript_view_grid,
-    left = uiOutput(ns('test')) %>% shinycssloaders::withSpinner(),
+    left = uiOutput(ns("test")) %>% shinycssloaders::withSpinner(),
     # reactableOutput(ns("transcript_table")) %>%
-    right = uiOutput(ns('test')) %>% shinycssloaders::withSpinner()
+    right = uiOutput(ns("test")) %>% shinycssloaders::withSpinner()
   )
 }
 

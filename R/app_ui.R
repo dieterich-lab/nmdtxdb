@@ -4,12 +4,53 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @import shiny.semantic
+#' @importFrom reactable reactableOutput
+#' @importFrom shinycssloaders withSpinner
+#'
 #' @noRd
 app_ui <- function(request) {
   tagList(
     golem_add_external_resources(),
-     semanticPage(
-      mod_parent_ui('parent_ui')
+    semanticPage(
+      sidebar_layout(
+        sidebar_panel(
+          width = 2,
+          selectizeInput(
+            inputId = "gene_select",
+            label = h2("Select a gene:"),
+            choices = NULL,
+            selected = NULL,
+            multiple = FALSE,
+            options = list(create = FALSE)
+          ),
+          uiOutput("gene_info")
+        ),
+        main_panel(
+          width = 10,
+          tabset(
+            tabs = list(
+              list(
+                menu = "Gene expression",
+                content = mod_gene_ui("mod_gene1"),
+                id = "gene_view_tab"
+              ),
+              list(
+                menu = "Transcript table",
+                content = reactableOutput("table_transcript") %>%
+                  withSpinner(),
+                id = "transcript_view_tab"
+              ),
+              list(
+                menu = "Advanced view",
+                content = mod_phase1_ui("mod_phase1"),
+                id = "advanced_tab"
+              )
+            ),
+            active = "second_tab",
+            id = "transcript_tabset"
+          )
+        )
+      )
     )
   )
 }

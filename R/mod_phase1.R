@@ -34,7 +34,6 @@ mod_phase1_ui <- function(id) {
 #' @noRd
 mod_phase1_server <- function(id, conn, select) {
   moduleServer(id, function(input, output, session) {
-
     anno <- reactive({
       validate(need(select, message = "Waiting selection"))
       tbl(conn, "anno") %>%
@@ -45,7 +44,7 @@ mod_phase1_server <- function(id, conn, select) {
       anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "dtu"), by="gene_id")  %>%
+        left_join(tbl(conn, "dtu"), by = "gene_id") %>%
         dplyr::select(
           contrasts,
           transcript_name,
@@ -58,7 +57,8 @@ mod_phase1_server <- function(id, conn, select) {
           .,
           elementId = "adv_view_table",
           language = reactableLang(
-            filterPlaceholder = 'Filter'),
+            filterPlaceholder = "Filter"
+          ),
           filterable = TRUE,
           striped = TRUE,
           defaultSorted = c("padj"),
@@ -107,7 +107,7 @@ mod_phase1_server <- function(id, conn, select) {
         unique()
 
       tbl(conn, "dtu") %>%
-        #filter(padj > 0.05, across(starts_with("log2fold"), ~abs(.x) > 1)) %>%
+        # filter(padj > 0.05, across(starts_with("log2fold"), ~abs(.x) > 1)) %>%
         collect() %>%
         mutate(selected = ifelse(gene_name == !!select, "T", "F")) %>%
         plot_ly(
@@ -121,25 +121,24 @@ mod_phase1_server <- function(id, conn, select) {
           hoverinfo = "text"
         ) %>%
         add_markers(
-          group = ~factor(selected),
-          color = ~factor(selected),
-          colors=colorRamp(c("gray", "red")),
-          opacity = c(0.4, 0.9)) %>%
+          group = ~ factor(selected),
+          color = ~ factor(selected),
+          colors = colorRamp(c("gray", "red")),
+          opacity = c(0.4, 0.9)
+        ) %>%
         layout(
           showlegend = FALSE,
           title = "DTU volcano",
           hoverlabel = list(align = "left")
         ) %>%
         toWebGL()
-
     })
 
     output$gene_counts <- renderPlotly({
-
       anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "gene_counts"), by='gene_id') %>%
+        left_join(tbl(conn, "gene_counts"), by = "gene_id") %>%
         collect() %>%
         tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
         mutate(group = str_sub(name, start = 1, end = -3)) %>%
@@ -157,7 +156,7 @@ mod_phase1_server <- function(id, conn, select) {
             title = "",
             showticklabels = FALSE
           ),
-          yaxis = list(title = "log10(counts)", rangemode='tozero'),
+          yaxis = list(title = "log10(counts)", rangemode = "tozero"),
           legend = list(orientation = "h")
         )
     })
@@ -171,7 +170,7 @@ mod_phase1_server <- function(id, conn, select) {
         collect() %>%
         mutate(group = str_sub(name, start = 1, end = -3)) %>%
         group_by(name) %>%
-        mutate(total = sum(value, na.rm=TRUE)) %>%
+        mutate(total = sum(value, na.rm = TRUE)) %>%
         filter(total != 0) %>%
         ungroup() %>%
         mutate(usage = value / total) %>%
@@ -185,17 +184,18 @@ mod_phase1_server <- function(id, conn, select) {
           x = ~usage,
           color = ~group,
           colors = c(I("steelblue"), I("gold"), I("forestgreen")),
-          orientation = 'h',
-          opacity = 0.8)  %>%
-        layout(boxmode = "group",
-               title = "Transcript proportion",
-               xaxis = list(title = ""),
-               showlegend = FALSE)
-
+          orientation = "h",
+          opacity = 0.8
+        ) %>%
+        layout(
+          boxmode = "group",
+          title = "Transcript proportion",
+          xaxis = list(title = ""),
+          showlegend = FALSE
+        )
     })
 
     output$gene_structure <- renderPlot({
-
       gtf <- anno() %>%
         left_join(tbl(conn, "gtf"), by = c("transcript_id", "gene_id", "transcript_name", "gene_name")) %>%
         collect()

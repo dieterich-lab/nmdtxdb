@@ -1,39 +1,54 @@
-conn <- dbConnect(
-  RPostgres::Postgres(),
-  host = "***REMOVED***",
-  port = ***REMOVED***,
-  password = "WZupLe2wpejLBz7R2qrKWQRUdNvcWaGoBvcpracviYSPJMQ4duCXaGpMWHN8PjBU",
-  user = "postgres"
-)
+#' Creates PSQL table
+#'
+#' @import DBI
+#' @import RPostgres
+#'
+creat_db <- function() {
 
-dbExecute(
-  conn,
-  "CREATE USER ***REMOVED*** WITH PASSWORD '***REMOVED***';"
-)
+  dbname <- "nmd_transcriptome"
+  host <- Sys.getenv("PGHOST")
+  port <- Sys.getenv("PGPORT")
+  password <- Sys.getenv("PGPASSWORD")
+  user <- Sys.getenv("PGUSER")
+  nmd_user <- Sys.getenv("NMD_PGUSER")
+  nmd_password <- Sys.getenv("NMD_PGPASSWORD")
 
-dbExecute(
-  conn,
-  "CREATE DATABASE nmd_transcriptome WITH OWNER ***REMOVED***;"
-)
+  conn <- dbConnect(
+    Postgres(),
+    host = host,
+    port = port,
+    password = password,
+    user = user
+  )
 
+  dbExecute(
+    conn,
+    str_glue("CREATE USER {nmd_user} WITH PASSWORD '{nmd_password}';")
+  )
 
-dbExecute(
-  conn,
-  "GRANT USAGE ON SCHEMA public TO ***REMOVED***;"
-)
-
-
-dbExecute(
-  conn,
-  "GRANT SELECT ON ALL TABLES IN SCHEMA public TO ***REMOVED***;"
-)
-
-
-dbExecute(
-  conn,
-  "ALTER DEFAULT PRIVILEGES IN SCHEMA public
-   GRANT SELECT ON TABLES TO ***REMOVED***;"
-)
+  dbExecute(
+    conn,
+    str_glue("CREATE DATABASE {dbname} WITH OWNER {nmd_user};")
+  )
 
 
-dbDisconnect(conn)
+  dbExecute(
+    conn,
+    str_glue("GRANT USAGE ON SCHEMA public TO {nmd_user};")
+  )
+
+
+  dbExecute(
+    conn,
+    str_glue("GRANT SELECT ON ALL TABLES IN SCHEMA public TO {nmd_user};")
+  )
+
+
+  dbExecute(
+    conn,
+    "ALTER DEFAULT PRIVILEGES IN SCHEMA public
+   GRANT SELECT ON TABLES TO {nmd_user};"
+  )
+
+  dbDisconnect(conn)
+}

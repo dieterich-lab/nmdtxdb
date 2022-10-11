@@ -1,3 +1,4 @@
+
 #' gene view UI Function
 #'
 #' @description A shiny Module.
@@ -10,6 +11,12 @@
 #' @importFrom reactable reactableOutput
 mod_gene_ui <- function(id) {
   ns <- NS(id)
+
+  gene_view_grid <- create_grid(
+    areas = rbind(c("left", "right")),
+    cols_width = c("30%", "auto"),
+    rows_height = c("auto")
+  )
 
   grid(
     gene_view_grid,
@@ -28,7 +35,6 @@ mod_gene_ui <- function(id) {
 #' @noRd
 mod_gene_server <- function(id, conn, select) {
   moduleServer(id, function(input, output, session) {
-
     anno <- reactive({
       validate(need(select, message = "Waiting selection"))
       tbl(conn, "anno") %>%
@@ -39,7 +45,7 @@ mod_gene_server <- function(id, conn, select) {
       dge <- anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "dge"), by='gene_id') %>%
+        left_join(tbl(conn, "dge"), by = "gene_id") %>%
         select(contrasts, log2FoldChange, padj) %>%
         collect()
 
@@ -72,7 +78,6 @@ mod_gene_server <- function(id, conn, select) {
     })
 
     output$gene_exp <- renderPlot({
-
       dge <- conn %>%
         tbl("dge") %>%
         collect()
@@ -86,19 +91,20 @@ mod_gene_server <- function(id, conn, select) {
 
       dge %>%
         mutate(contrasts = forcats::fct_reorder(contrasts, nchar(contrasts))) %>%
-        ggplot(., aes(y=contrasts, x=log2FoldChange)) +
+        ggplot(., aes(y = contrasts, x = log2FoldChange)) +
         ylab("Density") +
-        ggridges::geom_density_ridges(alpha=0.5, color=NA, bandwidth=0.083) +
+        ggridges::geom_density_ridges(alpha = 0.5, color = NA, bandwidth = 0.083) +
         ggridges::theme_ridges() +
         geom_text(
-          data=gene_l2fc,
-          aes(label=paste0("↓", !!select)),
-          position=position_nudge(y=0.2),
+          data = gene_l2fc,
+          aes(label = paste0("↓", !!select)),
+          position = position_nudge(y = 0.2),
           hjust = 0,
-          colour="red",
+          colour = "red",
           # angle=45,
-          size=3.5) +
-      xlim(c(-2, 2))
+          size = 3.5
+        ) +
+        xlim(c(-2, 2))
     })
   })
 }
