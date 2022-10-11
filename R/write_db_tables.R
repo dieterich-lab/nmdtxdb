@@ -1,6 +1,12 @@
 #' Updated db
 #'
-#' @import tidyverse
+#' @import dplyr
+#' @import DBI
+#' @import stringr
+#' @import DESeq2
+#' @importFrom rtracklayer import
+#' @importFrom openxlsx read.xlsx
+#' @importFrom magrittr "%>%"
 #'
 name <- function(
   base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
@@ -34,7 +40,7 @@ name <- function(
   # gtf <- rtracklayer::import(
   #   file.path(base_path, "phase2/stringtie_merge/merged_each.gtf"))
 
-  gtf <- rtracklayer::import(
+  gtf <- import(
     file.path(base_path, "../DFG_seq_Nanopore/GRCh38_90_SIRV_Set3.gtf")
   )
 

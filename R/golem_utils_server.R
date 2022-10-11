@@ -100,18 +100,22 @@ log10_or_max <- function(x) {
   log10x
 }
 
+#' @importFrom httr modify_url GET
+#' @importFrom jsonlite fromJSON
 get_gene_info <- function(gene_id) {
-  url <- httr::modify_url(
+  url <- modify_url(
     url = "https://mygene.info",
     path = paste0("v3/gene/", gene_id),
     query = "fields=symbol,summary,alias,uniprot,name"
   )
 
-  resp <- httr::GET(url, httr::accept("application/json"))
-  jsonlite::fromJSON(httr::content(resp, "text"), simplifyVector = TRUE)
+  resp <- GET(url, httr::accept("application/json"))
+  fromJSON(httr::content(resp, "text"), simplifyVector = TRUE)
 }
 
-
+#' @importFrom htmltools tagAppendAttributes
+#' @importFrom stringr str_interp str_glue
+#' @importFrom
 render_gene_card <- function(gene_id, conn) {
   parsed <- get_gene_info(gene_id)
   transcripts <- tbl(conn, "gtf") %>%
@@ -141,19 +145,19 @@ render_gene_card <- function(gene_id, conn) {
       div(
         class = "meta",
         HTML(
-          stringr::str_interp("Also known as: ${paste(parsed$alias, collapse=', ')}")
+          str_interp("Also known as: ${paste(parsed$alias, collapse=', ')}")
         )
       ),
       div(str_glue("NMD isoforms: {n_nmd}/{sum(n_transcripts)}")),
       div(
         str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
         icon("question circle"),
-      ) %>% htmltools::tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
+      ) %>% tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
       # p("Novel transcripts : X/XX"),
       div(
         str_glue("Long read evidence: {n_support}/{n_transcripts}"),
         icon("question circle"),
-      ) %>% htmltools::tagAppendAttributes(
+      ) %>% tagAppendAttributes(
         .,
         "data-tooltip" = "Isoforms with identical intron chain"
       ),

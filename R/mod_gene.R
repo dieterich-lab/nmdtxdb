@@ -30,6 +30,8 @@ mod_gene_ui <- function(id) {
 #' gene view Server Functions
 #' @import dplyr
 #' @importFrom crosstalk SharedData
+#' @importFrom forcats fct_reorder
+#' @importFrom ggridges geom_density_ridges theme_ridges
 #' @importFrom reactable reactableOutput getReactableState renderReactable
 #' @import stringr
 #' @noRd
@@ -52,7 +54,7 @@ mod_gene_server <- function(id, conn, select) {
       validate(need(any(!is.na(dge$log2FoldChange)), "Gene not tested for DE."))
       dge %>%
         mutate_at(vars(padj, log2FoldChange), ~ format(round(., digits = 2), nsmall = 2)) %>%
-        mutate(contrasts = forcats::fct_reorder(contrasts, nchar(contrasts))) %>%
+        mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
         arrange(desc(contrasts)) %>%
         reactable(
           .,
@@ -90,11 +92,11 @@ mod_gene_server <- function(id, conn, select) {
       validate(need(nrow(gene_l2fc) > 0, "Gene not tested for DE."))
 
       dge %>%
-        mutate(contrasts = forcats::fct_reorder(contrasts, nchar(contrasts))) %>%
+        mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
         ggplot(., aes(y = contrasts, x = log2FoldChange)) +
         ylab("Density") +
-        ggridges::geom_density_ridges(alpha = 0.5, color = NA, bandwidth = 0.083) +
-        ggridges::theme_ridges() +
+        geom_density_ridges(alpha = 0.5, color = NA, bandwidth = 0.083) +
+        theme_ridges() +
         geom_text(
           data = gene_l2fc,
           aes(label = paste0("↓", !!select)),

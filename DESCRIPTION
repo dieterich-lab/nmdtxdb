@@ -1,13 +1,34 @@
 Package: nmdtx
 Title: NMD transcriptome
 Version: 0.0.0.9000
-Authors@R: person('Thiago', 'Britto-Borges', email = 'thiago.brittoborges@uni-heildeberg.de', role = c('cre', 'aut'))
+Authors@R: person('Thiago', 'Britto-Borges', email = 'thiago.brittoborges@uni-heidelberg.de', role = c('cre', 'aut'))
 Description: PKG_DESC.
 License: MIT + file LICENSE
 Imports: 
     config (>= 0.3.1),
+    crosstalk,
+    DBI,
+    DESeq2,
+    dplyr,
+    forcats,
+    ggplot2,
+    ggridges,
+    ggtranscript,
     golem (>= 0.3.3),
-    shiny (>= 1.7.2)
+    htmltools,
+    httr,
+    jsonlite,
+    magrittr,
+    openxlsx,
+    plotly,
+    reactable,
+    RPostgres,
+    rtracklayer,
+    shiny (>= 1.7.2),
+    shiny.semantic,
+    shinycssloaders,
+    stringr,
+    tidyr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.1
