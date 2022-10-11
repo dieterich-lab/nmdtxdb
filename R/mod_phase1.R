@@ -88,14 +88,17 @@ mod_phase1_server <- function(id, conn, select) {
             ),
             log2fold_SMG6kd_SMG7ko_control = colDef(
               name = "fc_SMG67KD",
-              format = colFormat(digits = 2)
+              format = colFormat(digits = 2),
+              filterable = FALSE
             ),
             log2fold_SMG5kd_SMG7ko_control = colDef(
               name = "fc_SMG57KD",
-              format = colFormat(digits = 2)
+              format = colFormat(digits = 2),
+              filterable = FALSE
             ),
             padj = colDef(
-              format = colFormat(digits = 2)
+              format = colFormat(digits = 2),
+              filterable = FALSE
             )
           )
         )

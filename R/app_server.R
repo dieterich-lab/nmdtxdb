@@ -97,11 +97,13 @@ app_server <- function(input, output, session) {
         ),
         columns = list(
           padj = colDef(
-            format = colFormat(digits = 2)
+            format = colFormat(digits = 2),
+            filterable = FALSE
           ),
           log2fold = colDef(
             name = "log2fc",
-            format = colFormat(digits = 2)
+            format = colFormat(digits = 2),
+            filterable = FALSE
           ),
           contrasts = colDef(
             width = 200
