@@ -1,0 +1,40 @@
+
+
+
+
+#' transcript view UI Function
+#'
+#' @description A shiny Module.
+#'
+#' @param id,input,output,session Internal parameters for {shiny}.
+#'
+#' @noRd
+#'
+#' @importFrom shiny NS
+#' @importFrom reactable reactableOutput
+mod_transcript_ui <- function(id) {
+  ns <- NS(id)
+
+  grid(
+    transcript_view_grid,
+    left = uiOutput(ns("test")) %>% shinycssloaders::withSpinner(),
+    # reactableOutput(ns("transcript_table")) %>%
+    right = uiOutput(ns("test")) %>% shinycssloaders::withSpinner()
+  )
+}
+
+#' transcript view Server Functions
+#' @import dplyr
+#' @importFrom crosstalk SharedData
+#' @importFrom reactable reactableOutput getReactableState renderReactable
+#' @import stringr
+#' @noRd
+mod_transcript_server <- function(id, conn, select) {
+  moduleServer(id, function(input, output, session) {
+    output$test <- renderUI({
+      tagList(
+        textInput("label", "Label")
+      )
+    })
+  })
+}
