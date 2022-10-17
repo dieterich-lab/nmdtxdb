@@ -1,11 +1,10 @@
 
 adv_grid <- create_grid(
   rbind(
-    c("top_left", "top_left", "top_right"),
     c("bottom_left", "bottom_mid", "bottom_right")
   ),
   c("20%", "30%", "50%"),
-  c("30%", "70%")
+  c("auto")
 )
 
 
@@ -25,8 +24,6 @@ mod_phase1_ui <- function(id) {
 
   grid(
     adv_grid,
-    top_left = reactableOutput(ns("table_transcript")) %>% shinycssloaders::withSpinner(),
-    top_right = plotlyOutput(ns("dtu_volcano")) %>% shinycssloaders::withSpinner(),
     bottom_left = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
     bottom_mid = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
     bottom_right = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner()
