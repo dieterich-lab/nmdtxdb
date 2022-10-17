@@ -1,3 +1,14 @@
+
+adv_grid <- create_grid(
+  rbind(
+    c("top_left", "top_left", "top_right"),
+    c("bottom_left", "bottom_mid", "bottom_right")
+  ),
+  c("20%", "30%", "50%"),
+  c("30%", "70%")
+)
+
+
 #' phase1 UI Function
 #'
 #' @description A shiny Module.
