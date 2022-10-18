@@ -1,10 +1,10 @@
-
 adv_grid <- create_grid(
   rbind(
-    c("bottom_left", "bottom_mid", "bottom_right")
+    c("top"),
+    c("bottom_left", "bottom_right")
   ),
-  c("20%", "30%", "50%"),
-  c("auto")
+  c("auto", "auto", "auto"),
+  c("300px", "300px")
 )
 
 
@@ -24,8 +24,8 @@ mod_phase1_ui <- function(id) {
 
   grid(
     adv_grid,
-    bottom_left = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
-    bottom_mid = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
+    top = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
+    bottom_left = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
     bottom_right = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner()
   )
 }
@@ -52,7 +52,7 @@ mod_phase1_server <- function(id, conn, select) {
       anno() %>%
         select(gene_id, gene_name) %>%
         distinct() %>%
-        left_join(tbl(conn, "dtu"), by = "gene_id") %>%
+        left_join(tbl(conn, "dtu2"), by = "gene_id") %>%
         dplyr::select(
           contrasts,
           transcript_name,
@@ -118,7 +118,6 @@ mod_phase1_server <- function(id, conn, select) {
         unique()
 
       tbl(conn, "dtu") %>%
-        # filter(padj > 0.05, across(starts_with("log2fold"), ~abs(.x) > 1)) %>%
         collect() %>%
         mutate(selected = ifelse(gene_name == !!select, "T", "F")) %>%
         plot_ly(
@@ -146,18 +145,22 @@ mod_phase1_server <- function(id, conn, select) {
     })
 
     output$gene_counts <- renderPlotly({
-      anno() %>%
-        select(gene_id, gene_name) %>%
-        distinct() %>%
-        left_join(tbl(conn, "gene_counts"), by = "gene_id") %>%
+      gene_id <- anno() %>%
+        pull(gene_id) %>%
+        unique()
+
+      conn %>%
+        tbl("gene_counts2") %>%
+        filter(gene_id == local(gene_id)) %>%
         collect() %>%
         tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
-        mutate(group = str_sub(name, start = 1, end = -3)) %>%
+        mutate(
+          group = str_sub(name, start = 1, end = -3)) %>%
         plot_ly(
           type = "box",
           x = ~group,
-          y = ~ log10_or_max(value),
-          color = ~ factor(group),
+          y = ~log10_or_max(value),
+          color = ~factor(group),
           colors = c(I("steelblue"), I("gold"), I("forestgreen"))
         ) %>%
         config(displayModeBar = FALSE) %>%
