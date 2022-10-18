@@ -4,7 +4,6 @@
 #' @import RPostgres
 #'
 creat_db <- function() {
-
   dbname <- "nmd_transcriptome"
   host <- Sys.getenv("PGHOST")
   port <- Sys.getenv("PGPORT")

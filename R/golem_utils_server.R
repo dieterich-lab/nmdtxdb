@@ -253,7 +253,8 @@ create_grid <- function(areas, cols_width, rows_height) {
     default = list(
       areas = areas,
       cols_width = cols_width,
-      rows_height = rows_height)
+      rows_height = rows_height
+    )
   )
 }
 
@@ -262,5 +263,3 @@ transcript_view_grid <- create_grid(
   c("30%", "auto"),
   c("auto")
 )
-
-
