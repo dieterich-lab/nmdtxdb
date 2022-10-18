@@ -1,7 +1,3 @@
-
-
-
-
 #' transcript view UI Function
 #'
 #' @description A shiny Module.
