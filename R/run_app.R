@@ -14,7 +14,6 @@ run_app <- function(onStart = NULL,
                     uiPattern = "/",
                     ...) {
   options <- list(
-    shiny.autoreload = TRUE,
     warn = 0,
     shiny.port = 3838,
     shiny.host = "0.0.0.0"

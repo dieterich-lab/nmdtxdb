@@ -8,9 +8,7 @@
 #' @importFrom openxlsx read.xlsx
 #' @importFrom magrittr "%>%"
 #'
-name <- function(
-  base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
-
+name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
   conn <- connect_db()
 
   dbListTables(conn)
@@ -23,7 +21,7 @@ name <- function(
   )
 
   ## DTU ####
-  files <- Sys.glob(file.path(base_path, "phase2/results/dtu*.xlsx"))
+  files <- Sys.glob(file.path(base_path, "phase2/results/dtu/dtu*.xlsx"))
   names(files) <- tools::file_path_sans_ext(basename(files))
   dtu <- lapply(files, openxlsx::read.xlsx)
   # dtu <- lapply(dtu, tibble::rownames_to_column)
@@ -83,8 +81,7 @@ name <- function(
   gene_counts <- counts(gene_counts, normalized = TRUE)
   colnames(gene_counts) <- metadata$group
   gene_counts %<>%
-    as_tibble() %>%
-    mutate(gene_name = rownames(.)) %>%
+    as_tibble(rownames = "gene_name") %>%
     left_join(anno[c("gene_name", "gene_id")], by = "gene_name")
 
   ## Transcript counts ####
@@ -103,5 +100,4 @@ name <- function(
   dbWriteTable(conn, "tx_counts2", tx_counts, overwrite = TRUE)
 
   dbDisconnect(conn)
-
 }
