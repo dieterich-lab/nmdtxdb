@@ -25,9 +25,10 @@ app_ui <- function(request) {
           ),
           uiOutput("gene_info"),
           div(a(
-            href="https://forms.gle/ZnaCwzNpFDPUHeh27",
+            href = "https://forms.gle/ZnaCwzNpFDPUHeh27",
             "Link to feedback form.",
-            target="_blank")),
+            target = "_blank"
+          )),
         ),
         main_panel(
           width = 10,
