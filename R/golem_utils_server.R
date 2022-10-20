@@ -115,7 +115,6 @@ get_gene_info <- function(gene_id) {
 
 #' @importFrom htmltools tagAppendAttributes
 #' @importFrom stringr str_interp str_glue
-#' @importFrom
 render_gene_card <- function(gene_id, conn) {
   parsed <- get_gene_info(gene_id)
   transcripts <- tbl(conn, "gtf") %>%

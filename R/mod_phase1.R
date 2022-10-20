@@ -36,6 +36,7 @@ mod_phase1_ui <- function(id) {
 #' @importFrom reactable reactableOutput getReactableState
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_split
+#' @import plotly
 #' @import ggtranscript
 #' @import ggplot2
 #' @import stringr

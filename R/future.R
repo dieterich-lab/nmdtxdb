@@ -21,8 +21,8 @@
 #   gene_info(render_gene_card(gene_id))
 #   mod_gene_server("mod_gene1", conn, input$gene_select)
 #   mod_phase1_server("mod_phase1", conn, input$gene_select)
-  # mod_transcript_server("mod_transcript1", conn, input$gene_select)
-  # annotation(NULL)
-  # coverage(NULL)
+# mod_transcript_server("mod_transcript1", conn, input$gene_select)
+# annotation(NULL)
+# coverage(NULL)
 #   NULL
 # })

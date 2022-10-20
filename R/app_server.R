@@ -2,14 +2,9 @@
 #'
 #' @param input,output,session Internal parameters for {shiny}.
 #' @import shiny
-#' @import dplyr
 #' @import shiny.semantic
-#' @import ggplot2
-#' @import reactable
-#' @import plotly
 #' @import crosstalk
-#' @import ggtranscript
-#' @import stringr
+#' @import dplyr
 #' @noRd
 app_server <- function(input, output, session) {
   conn <- connect_db()
@@ -21,6 +16,16 @@ app_server <- function(input, output, session) {
     choices = tbl(conn, "gtf") %>% pull("gene_name") %>% unique() %>% sort(),
     server = TRUE
   )
+  updateSelectizeInput(
+    session,
+    "contrast_select",
+    choices = tbl(conn, "metadata") %>% pull("group") %>% unique() %>% sort(),
+    server = TRUE,
+    selected = c(
+      "HEK_SMG7-KO_SMG5-KD_Z245",
+      "HEK_SMG7-KO_SMG6-KD_Z319"),
+  )
+
   send_toast(msg = "Server is ready. Choose a gene on the sidebar.", class = "success", session = session)
 
   gtf <- reactiveVal()

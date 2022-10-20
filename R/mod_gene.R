@@ -32,7 +32,7 @@ mod_gene_ui <- function(id) {
 #' @importFrom crosstalk SharedData
 #' @importFrom forcats fct_reorder
 #' @importFrom ggridges geom_density_ridges theme_ridges
-#' @importFrom reactable reactableOutput getReactableState renderReactable
+#' @import reactable
 #' @import stringr
 #' @noRd
 mod_gene_server <- function(id, conn, select) {
