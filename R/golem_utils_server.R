@@ -257,9 +257,3 @@ create_grid <- function(areas, cols_width, rows_height) {
     )
   )
 }
-
-transcript_view_grid <- create_grid(
-  rbind(c("left", "right")),
-  c("30%", "auto"),
-  c("auto")
-)

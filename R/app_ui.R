@@ -41,8 +41,7 @@ app_ui <- function(request) {
               ),
               list(
                 menu = "Transcript table",
-                content = reactableOutput("table_transcript") %>%
-                  withSpinner(),
+                content = mod_transcript_ui("mod_transcript1"),
                 id = "transcript_view_tab"
               ),
               list(

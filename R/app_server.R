@@ -44,71 +44,12 @@ app_server <- function(input, output, session) {
     gene_info(render_gene_card(gene_id, conn))
     mod_gene_server("mod_gene1", conn, input$gene_select)
     mod_phase1_server("mod_phase1", conn, input$gene_select)
+    mod_transcript_server("mod_transcript1", conn, input$gene_select)
   })
 
 
   output$gene_info <- renderUI({
     validate(need(input$gene_select, "Waiting selection"))
     req(gene_info())
-  })
-
-  output$table_transcript <- renderReactable({
-    validate(need(input$gene_select, "Waiting selection"))
-    gene_name <- gtf()[[1, "gene_name"]]
-
-    conn %>%
-      tbl("dtu2") %>%
-      dplyr::filter(gene_name == local(gene_name)) %>%
-      left_join(tbl(conn, "anno"), by = c("gene_name", "transcript_id")) %>%
-      select(transcript_name, contrasts, padj, log2fold) %>%
-      filter(!is.na(transcript_name)) %>%
-      left_join(
-        tbl(conn, "gtf") %>% select("transcript_name", "transcript_biotype"),
-        by = c("transcript_name")
-      ) %>%
-      distinct() %>%
-      collect() %>%
-      mutate(contrasts = str_sub(contrasts, 5)) %>%
-      reactable(
-        .,
-        language = reactableLang(
-          filterPlaceholder = "Filter"
-        ),
-        filterable = TRUE,
-        striped = TRUE,
-        defaultSorted = c("padj"),
-        showPageSizeOptions = TRUE,
-        defaultPageSize = 5,
-        pageSizeOptions = c(5, 10, 25, 50),
-        highlight = TRUE,
-        wrap = FALSE,
-        rowStyle = list(cursor = "pointer"),
-        theme = reactableTheme(
-          stripedColor = "#f6f8fa",
-          highlightColor = "#f0f5f9",
-          cellPadding = "8px 12px",
-          rowSelectedStyle = list(
-            backgroundColor = "#eee",
-            boxShadow = "inset 2px 0 0 0 #FF0000"
-          )
-        ),
-        defaultColDef = colDef(
-          sortNALast = TRUE
-        ),
-        columns = list(
-          padj = colDef(
-            format = colFormat(digits = 2),
-            filterable = FALSE
-          ),
-          log2fold = colDef(
-            name = "log2fc",
-            format = colFormat(digits = 2),
-            filterable = FALSE
-          ),
-          contrasts = colDef(
-            width = 200
-          )
-        )
-      )
   })
 }
