@@ -155,12 +155,13 @@ mod_phase1_server <- function(id, conn, select) {
         collect() %>%
         tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
         mutate(
-          group = str_sub(name, start = 1, end = -3)) %>%
+          group = str_sub(name, start = 1, end = -3)
+        ) %>%
         plot_ly(
           type = "box",
           x = ~group,
-          y = ~log10_or_max(value),
-          color = ~factor(group),
+          y = ~ log10_or_max(value),
+          color = ~ factor(group),
           colors = c(I("steelblue"), I("gold"), I("forestgreen"))
         ) %>%
         config(displayModeBar = FALSE) %>%
@@ -177,8 +178,9 @@ mod_phase1_server <- function(id, conn, select) {
 
 
     output$trancript_proportions <- renderPlotly({
-      anno() %>%
-        left_join(tbl(conn, "tx_counts"), by = c("transcript_id", "gene_id")) %>%
+      ids <- anno()$transcript_name
+      tbl(conn, "tx_counts2") %>%
+        filter(transcript_name %in% ids) %>%
         select(-c(gene_name, transcript_id, gene_id)) %>%
         tidyr::pivot_longer(-c(transcript_name)) %>%
         collect() %>%
