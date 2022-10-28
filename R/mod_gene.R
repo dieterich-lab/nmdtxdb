@@ -1,4 +1,3 @@
-
 #' gene view UI Function
 #'
 #' @description A shiny Module.
@@ -35,19 +34,14 @@ mod_gene_ui <- function(id) {
 #' @import reactable
 #' @import stringr
 #' @noRd
-mod_gene_server <- function(id, conn, select) {
+mod_gene_server <- function(id, conn, gene_id, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
-    anno <- reactive({
-      validate(need(select, message = "Waiting selection"))
-      tbl(conn, "anno") %>%
-        dplyr::filter(gene_name == !!select)
-    })
 
     output$gene_exp_table <- renderReactable({
-      dge <- anno() %>%
-        select(gene_id, gene_name) %>%
-        distinct() %>%
-        left_join(tbl(conn, "dge"), by = "gene_id") %>%
+      dge <- conn %>%
+        tbl("dge") %>%
+        filter(gene_id == !!gene_id) %>%
+        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
         select(contrasts, log2FoldChange, padj) %>%
         collect()
 
@@ -81,29 +75,30 @@ mod_gene_server <- function(id, conn, select) {
 
     output$gene_exp <- renderPlot({
       dge <- conn %>%
-        tbl("dge") %>%
+        tbl("dge2") %>%
+        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
         collect()
 
       gene_l2fc <- dge %>%
-        filter(gene_name == !!select) %>%
+        filter(gene_id == !!gene_id) %>%
         dplyr::select(gene_name, contrasts, log2FoldChange) %>%
         mutate(y = 0, yend = 0.7)
 
       validate(need(nrow(gene_l2fc) > 0, "Gene not tested for DE."))
-
+      text_color <- ifelse(gene_l2fc$log2FoldChange > 0, "red", "blue")
+      label <- sprintf("↓ %s", gene_name)
       dge %>%
         mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
-        ggplot(., aes(y = contrasts, x = log2FoldChange)) +
+        ggplot(aes(y = contrasts, x = log2FoldChange)) +
         ylab("Density") +
         geom_density_ridges(alpha = 0.5, color = NA, bandwidth = 0.083) +
         theme_ridges() +
         geom_text(
           data = gene_l2fc,
-          aes(label = paste0("↓", !!select)),
+          aes(label = label),
           position = position_nudge(y = 0.2),
           hjust = 0,
-          colour = "red",
-          # angle=45,
+          colour = text_color,
           size = 3.5
         ) +
         xlim(c(-2, 2))

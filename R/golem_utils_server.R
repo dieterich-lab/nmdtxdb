@@ -100,7 +100,7 @@ log10_or_max <- function(x) {
   log10x
 }
 
-#' @importFrom httr modify_url GET
+#' @importFrom httr modify_url GET http_type http_error status_code
 #' @importFrom jsonlite fromJSON
 get_gene_info <- function(gene_id) {
   url <- modify_url(
@@ -110,13 +110,40 @@ get_gene_info <- function(gene_id) {
   )
 
   resp <- GET(url, httr::accept("application/json"))
-  fromJSON(httr::content(resp, "text"), simplifyVector = TRUE)
+
+  if (http_type(resp) != "application/json") {
+    stop("API did not return json", call. = FALSE)
+  }
+
+  parsed <- fromJSON(httr::content(resp, "text"), simplifyVector = TRUE)
+  if (http_error(resp)) {
+    stop(
+      sprintf(
+        "mygene.info API request failed [%s]\n%s\n<%s>",
+        status_code(resp),
+        parsed$message,
+        parsed$documentation_url
+      ),
+      call. = FALSE
+    )
+  }
+
+  structure(
+    list(
+      content = parsed,
+      url = url,
+      response = resp
+    ),
+    class = "mygene_info_api"
+  )
 }
 
 #' @importFrom htmltools tagAppendAttributes
 #' @importFrom stringr str_interp str_glue
+#' @note remove db calls and test
 render_gene_card <- function(gene_id, conn) {
-  parsed <- get_gene_info(gene_id)
+  parsed <- get_gene_info(gene_id)$content
+
   transcripts <- tbl(conn, "gtf") %>%
     filter(type == "transcript", gene_id == !!gene_id) %>%
     collect()

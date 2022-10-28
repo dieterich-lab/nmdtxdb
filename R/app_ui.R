@@ -17,18 +17,35 @@ app_ui <- function(request) {
           width = 2,
           selectizeInput(
             inputId = "gene_select",
-            label = h2("Select a gene:"),
+            label = h3("Pick a gene:"),
             choices = NULL,
             selected = NULL,
             multiple = FALSE,
             options = list(create = FALSE)
           ),
+          selectizeInput(
+            inputId = "contrast_select",
+            label = h3("Pick contrasts:"),
+            choices = NULL,
+            multiple = TRUE,
+            options = list(
+              create = FALSE,
+              plugins = list("remove_button")
+            )
+          ),
           uiOutput("gene_info"),
-          div(a(
-            href = "https://forms.gle/ZnaCwzNpFDPUHeh27",
-            "Link to feedback form.",
-            target = "_blank"
-          )),
+          br(),
+          div(
+            action_button(
+              input_id = "action_button_feedback",
+              onclick = "window.open(
+              'https://forms.gle/ZnaCwzNpFDPUHeh27',
+              '_blank')",
+              class = "red",
+              icon = icon("th"),
+              label = "Feedback",
+            )
+          ),
         ),
         main_panel(
           width = 10,
@@ -58,6 +75,7 @@ app_ui <- function(request) {
     )
   )
 }
+
 #' Add external Resources to the Application
 #'
 #' This function is internally used to add external
