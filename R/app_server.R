@@ -50,7 +50,7 @@ app_server <- function(input, output, session) {
     gene_name <- anno()[[1, "gene_name"]]
     gene_info(render_gene_card(gene_id, conn))
     mod_gene_server("mod_gene1", conn, gene_id, gene_name, contrast)
-    # mod_phase1_server("mod_phase1", conn, input$gene_select)
+    # mod_transcript_structure_server("mod_transcript_structure", conn, input$gene_select)
     # mod_transcript_server("mod_transcript1", conn, input$gene_select)
   })
 
@@ -65,8 +65,8 @@ app_server <- function(input, output, session) {
 
   # callModule(mod_gene_server, "mod_gene1", conn, anno, contrast)
 
-  # mod_phase1_server(
-  #   "mod_phase1", conn, gene_name
+  # mod_transcript_structure_server(
+  #   "mod_transcript_structure", conn, gene_name
   # )
   # mod_transcript_server(
   #   "mod_transcript1", conn, gene_name

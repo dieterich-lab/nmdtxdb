@@ -63,7 +63,7 @@ app_ui <- function(request) {
               ),
               list(
                 menu = "Advanced view",
-                content = mod_phase1_ui("mod_phase1"),
+                content = mod_transcript_structure_ui("mod_transcript_structure"),
                 id = "advanced_tab"
               )
             ),

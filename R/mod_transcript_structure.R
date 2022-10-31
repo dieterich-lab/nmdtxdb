@@ -19,7 +19,7 @@ adv_grid <- create_grid(
 #' @importFrom shiny NS plotOutput
 #' @importFrom reactable reactableOutput
 #' @importFrom plotly plotlyOutput
-mod_phase1_ui <- function(id) {
+mod_transcript_structure_ui <- function(id) {
   ns <- NS(id)
 
   grid(
@@ -41,7 +41,7 @@ mod_phase1_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_phase1_server <- function(id, conn, app_state) {
+mod_transcript_structure_server <- function(id, conn, app_state) {
   moduleServer(id, function(input, output, session) {
     anno <- reactive({
       validate(need(select, message = "Waiting selection"))
