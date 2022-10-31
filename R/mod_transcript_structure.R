@@ -41,7 +41,7 @@ mod_phase1_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_phase1_server <- function(id, conn, select) {
+mod_phase1_server <- function(id, conn, app_state) {
   moduleServer(id, function(input, output, session) {
     anno <- reactive({
       validate(need(select, message = "Waiting selection"))
