@@ -7,12 +7,9 @@
 #' @importFrom rtracklayer import
 #' @importFrom openxlsx read.xlsx
 #' @importFrom magrittr "%>%"
-#'
+conn <- connect_db()
 name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
-  conn <- connect_db()
-
   dbListTables(conn)
-
 
   ## junction support from long reads ####
   has_support <- read.csv(
@@ -38,7 +35,7 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   # gtf <- rtracklayer::import(
   #   file.path(base_path, "phase2/stringtie_merge/merged_each.gtf"))
 
-  gtf <- import(
+  gtf <- rtracklayer::import(
     file.path(base_path, "../DFG_seq_Nanopore/GRCh38_90_SIRV_Set3.gtf")
   )
 
@@ -66,13 +63,7 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
   metadata %<>%
     filter(!is.na(Replicate)) %>%
-    mutate(
-      condition = gsub(x = Condition, " ", ""),
-      cellline = word(Cell_line, 1),
-      group = str_glue("{condition}_{Replicate}")
-    )
-
-  id2group <- metadata %>%
+    id2group() <- metadata %>%
     dplyr::select(CCG_Sample_ID, group)
 
   ## Gene counts ####
@@ -86,16 +77,28 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
 
   ## Transcript counts ####
   tx_counts <- readRDS(file.path(base_path, "phase2/data/tx_counts.RDS")) %>%
-    counts() %>%
+    DRIMSeq::counts() %>%
     dplyr::rename(transcript_id = feature_id, gene_name = gene_id) %>%
     left_join(anno) %>%
-    dplyr::filter(transcript_id %in% unique(dtu$transcript_id))
+    dplyr::filter(transcript_id %in% unique(dtu$transcript_id)) # %>%
+  # select(-c(gene_name, transcript_id, gene_id)) %>%
+  # tidyr::pivot_longer(-c(transcript_name)) %>%
+  # collect() %>%
+  # mutate(group = str_sub(name, start = 1, end = -3)) %>%
+  # group_by(name) %>%
+  # mutate(total = sum(value, na.rm = TRUE)) %>%
+  # filter(total != 0) %>%
+  # ungroup() %>%
+  # mutate(usage = value / total) %>%
+  # collect() %>%
+
 
   dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
   dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
   dbWriteTable(conn, "gtf2", gtf, overwrite = TRUE)
   dbWriteTable(conn, "dge2", dge, overwrite = TRUE)
   dbWriteTable(conn, "anno2", anno, overwrite = TRUE)
+  dbWriteTable(conn, "metadata", metadata, overwrite = TRUE)
   dbWriteTable(conn, "gene_counts2", gene_counts, overwrite = TRUE)
   dbWriteTable(conn, "tx_counts2", tx_counts, overwrite = TRUE)
 
