@@ -41,7 +41,7 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, app_state) {
+mod_transcript_structure_server <- function(id, conn, gene_id, contrast) {
   moduleServer(id, function(input, output, session) {
     anno <- reactive({
       validate(need(select, message = "Waiting selection"))
@@ -61,6 +61,7 @@ mod_transcript_structure_server <- function(id, conn, app_state) {
           log2fold_SMG6kd_SMG7ko_control,
           log2fold_SMG5kd_SMG7ko_control
         ) %>%
+        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
         collect() %>%
         reactable(
           .,
@@ -153,6 +154,7 @@ mod_transcript_structure_server <- function(id, conn, app_state) {
       conn %>%
         tbl("gene_counts2") %>%
         filter(gene_id == local(gene_id)) %>%
+        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
         collect() %>%
         tidyr::pivot_longer(-c(gene_id, gene_name)) %>%
         mutate(

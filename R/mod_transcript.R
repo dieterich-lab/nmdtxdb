@@ -44,6 +44,7 @@ mod_transcript_server <- function(id, conn, select) {
         left_join(tbl(conn, "dtu2"), by = "transcript_id") %>%
         select(transcript_id, contrasts, padj, log2fold) %>%
         filter(!is.na(transcript_id)) %>%
+        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
         left_join(
           tbl(conn, "gtf") %>% select("transcript_name", "transcript_id", "transcript_biotype"),
           by = c("transcript_id")
