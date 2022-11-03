@@ -55,6 +55,8 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   dtu$contrasts <- rlang::exec(recode, !!!group_recode, .x = dtu$contrasts)
   stopifnot(setdiff(dtu$contrasts, group_recode))
 
+
+
   ## GTF ####
   # gtf <- rtracklayer::import(
   #   file.path(base_path, "phase2/stringtie_merge/merged_each.gtf"))
@@ -64,6 +66,11 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
 
   gtf <- as.data.frame(gtf) %>%
     dplyr::filter(transcript_id %in% unique(dtu$transcript_id))
+
+  dtu %<>%
+    left_join(
+      gtf %>% select("transcript_name", "transcript_id", "transcript_biotype"),
+      by = c("transcript_id"))
 
   ## Annotation
   anno <- gtf %>%
@@ -88,6 +95,8 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   )
   dge$contrasts <- rlang::exec(recode, !!!group_recode, .x = dge$contrasts)
   stopifnot(rlang::is_empty(setdiff(dge$contrasts, group_recode)))
+  dge %>%
+    left_join(anno %>% select_())
 
   ## Gene counts ####
   gene_counts <- readRDS(file.path(base_path, "phase2/data/dge_dds.RDS"))
@@ -127,3 +136,4 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
 
   dbDisconnect(conn)
 }
+
