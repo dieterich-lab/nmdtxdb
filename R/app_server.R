@@ -27,7 +27,11 @@ app_server <- function(input, output, session) {
   updateSelectizeInput(
     session,
     "contrast_select",
-    choices = tbl(conn, "metadata") %>% pull("group") %>% unique() %>% sort(),
+    choices = tbl(conn, "metadata") %>%
+      pull("group") %>%
+      unique() %>%
+      grep('Luc', ., value = TRUE, invert = TRUE) %>%
+      sort(),
     server = TRUE,
     selected = INITIAL_CONTRAST,
   )
@@ -57,11 +61,10 @@ app_server <- function(input, output, session) {
       transcript_id <- anno()[[1, "transcript_id"]]
       transcript_name <- anno()[[1, "transcript_name"]]
 
-
       gene_info(render_gene_card(gene_id, conn))
       mod_gene_server("mod_gene1", conn, gene_name, contrast())
-      # mod_transcript_structure_server("mod_transcript_structure", conn, input$gene_select)
-      # mod_transcript_server("mod_transcript1", conn, input$gene_select)
+      mod_transcript_structure_server("mod_transcript_structure", conn, gene_name, contrast())
+      mod_transcript_server("mod_transcript1", conn, transcript_name, contrast())
     }
   )
 
