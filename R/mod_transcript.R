@@ -29,26 +29,15 @@ mod_transcript_ui <- function(id) {
 #' @importFrom reactable getReactableState renderReactable
 #' @import stringr
 #' @noRd
-mod_transcript_server <- function(id, conn, select) {
+mod_transcript_server <- function(id, conn, transcript_name, contrast) {
   moduleServer(id, function(input, output, session) {
-    anno <- reactive({
-      validate(need(select, message = "Waiting selection"))
-      tbl(conn, "anno") %>%
-        dplyr::filter(gene_name == !!select)
-    })
 
     output$table_transcript <- renderReactable({
-      anno() %>%
-        select(transcript_id) %>%
-        distinct() %>%
-        left_join(tbl(conn, "dtu2"), by = "transcript_id") %>%
-        select(transcript_id, contrasts, padj, log2fold) %>%
-        filter(!is.na(transcript_id)) %>%
-        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
-        left_join(
-          tbl(conn, "gtf") %>% select("transcript_name", "transcript_id", "transcript_biotype"),
-          by = c("transcript_id")
-        ) %>%
+      conn %>%
+        tbl("dtu2") %>%
+        filter(transcript_name == !!transcript_name,
+               contrasts %in% !!contrast) %>%
+        select(transcript_id, contrasts, transcript_biotype, padj, log2fold) %>%
         distinct() %>%
         collect() %>%
         mutate(contrasts = str_sub(contrasts, 5)) %>%
