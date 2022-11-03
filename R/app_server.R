@@ -14,7 +14,6 @@ INITIAL_CONTRAST <- c(
 app_server <- function(input, output, session) {
   conn <- connect_db()
 
-  contrast <- reactiveVal(INITIAL_CONTRAST)
   gene_info <- reactiveVal()
 
   updateSelectizeInput(
@@ -45,14 +44,26 @@ app_server <- function(input, output, session) {
       collect()
   })
 
-  observeEvent(anno(), ignoreNULL = TRUE, {
-    gene_id <- anno()[[1, "gene_id"]]
-    gene_name <- anno()[[1, "gene_name"]]
-    gene_info(render_gene_card(gene_id, conn))
-    mod_gene_server("mod_gene1", conn, gene_id, gene_name, contrast)
-    # mod_transcript_structure_server("mod_transcript_structure", conn, input$gene_select)
-    # mod_transcript_server("mod_transcript1", conn, input$gene_select)
+  contrast <- eventReactive(input$contrast_select, {
+    input$contrast_select
   })
+
+  observeEvent(
+    c(anno(), contrast()),
+    ignoreNULL = TRUE,
+    {
+      gene_id <- anno()[[1, "gene_id"]]
+      gene_name <- anno()[[1, "gene_name"]]
+      transcript_id <- anno()[[1, "transcript_id"]]
+      transcript_name <- anno()[[1, "transcript_name"]]
+
+
+      gene_info(render_gene_card(gene_id, conn))
+      mod_gene_server("mod_gene1", conn, gene_name, contrast())
+      # mod_transcript_structure_server("mod_transcript_structure", conn, input$gene_select)
+      # mod_transcript_server("mod_transcript1", conn, input$gene_select)
+    }
+  )
 
   output$gene_info <- renderUI({
     validate(need(input$gene_select, "Waiting selection"))
@@ -63,7 +74,6 @@ app_server <- function(input, output, session) {
   #   contrast <- input$contrast_select
   # })
 
-  # callModule(mod_gene_server, "mod_gene1", conn, anno, contrast)
 
   # mod_transcript_structure_server(
   #   "mod_transcript_structure", conn, gene_name

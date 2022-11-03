@@ -34,19 +34,21 @@ mod_gene_ui <- function(id) {
 #' @import reactable
 #' @import stringr
 #' @noRd
-mod_gene_server <- function(id, conn, gene_id, gene_name, contrast) {
+mod_gene_server <- function(id, conn, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
+    data <- reactive({
+
+      conn %>%
+        tbl("dge2") %>%
+        filter(contrasts %in% !!contrast) %>%
+        select(contrasts, log2FoldChange, padj, gene_name) %>%
+        collect()
+    })
 
     output$gene_exp_table <- renderReactable({
-      dge <- conn %>%
-        tbl("dge") %>%
-        filter(gene_id == !!gene_id) %>%
-        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
-        select(contrasts, log2FoldChange, padj) %>%
-        collect()
-
-      validate(need(any(!is.na(dge$log2FoldChange)), "Gene not tested for DE."))
-      dge %>%
+      validate(need(nrow(data())  > 0, "Gene not tested for DE."))
+      data() %>%
+        filter(gene_name == !!gene_name) %>%
         mutate_at(vars(padj, log2FoldChange), ~ format(round(., digits = 2), nsmall = 2)) %>%
         mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
         arrange(desc(contrasts)) %>%
@@ -74,24 +76,19 @@ mod_gene_server <- function(id, conn, gene_id, gene_name, contrast) {
     })
 
     output$gene_exp <- renderPlot({
-      dge <- conn %>%
-        tbl("dge2") %>%
-        filter(if(!is.null(contrast)) (contrasts %in% !!contrast) else TRUE) %>%
-        collect()
-
-      gene_l2fc <- dge %>%
-        filter(gene_id == !!gene_id) %>%
+      gene_l2fc <- data() %>%
+        filter(gene_name == !!gene_name) %>%
         dplyr::select(gene_name, contrasts, log2FoldChange) %>%
         mutate(y = 0, yend = 0.7)
 
       validate(need(nrow(gene_l2fc) > 0, "Gene not tested for DE."))
       text_color <- ifelse(gene_l2fc$log2FoldChange > 0, "red", "blue")
       label <- sprintf("↓ %s", gene_name)
-      dge %>%
+      data() %>%
         mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
         ggplot(aes(y = contrasts, x = log2FoldChange)) +
         ylab("Density") +
-        geom_density_ridges(alpha = 0.5, color = NA, bandwidth = 0.083) +
+        geom_density_ridges(alpha = 0.5, color=NA, bandwidth = 0.083) +
         theme_ridges() +
         geom_text(
           data = gene_l2fc,

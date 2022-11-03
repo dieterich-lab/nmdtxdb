@@ -7,9 +7,24 @@
 #' @importFrom rtracklayer import
 #' @importFrom openxlsx read.xlsx
 #' @importFrom magrittr "%>%"
-conn <- connect_db()
+#' @importFrom tibble deframe
+conn <- nmdtx:::connect_db()
 name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
   dbListTables(conn)
+
+  ## METADATA ####
+  metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
+  metadata %<>%
+    filter(!is.na(Replicate))
+
+  id2group <- metadata %>%
+    dplyr::select(CCG_Sample_ID, group)
+
+  group_recode <- metadata %>%
+    select(Condition, group) %>%
+    filter(!str_detect(Condition, "control")) %>%
+    distinct() %>%
+    tibble::deframe()
 
   ## junction support from long reads ####
   has_support <- read.csv(
@@ -29,12 +44,20 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
     log2fold = coalesce(!!!select(., matches("log2fold_|_control$")))
   )
   dtu <- dtu %>% select(!ends_with("control"))
-  dtu <- dtu %>% dplyr::rename(transcript_id = featureID, gene_name = groupID)
+  dtu <- dtu %>% dplyr::rename(
+    transcript_id = featureID, gene_name = groupID
+  )
+  dtu$contrasts <- gsub(
+    dtu$contrasts,
+    pattern = "dtu_(.*)_vs_(.*)",
+    replacement = "\\1"
+  )
+  dtu$contrasts <- rlang::exec(recode, !!!group_recode, .x = dtu$contrasts)
+  stopifnot(setdiff(dtu$contrasts, group_recode))
 
   ## GTF ####
   # gtf <- rtracklayer::import(
   #   file.path(base_path, "phase2/stringtie_merge/merged_each.gtf"))
-
   gtf <- rtracklayer::import(
     file.path(base_path, "../DFG_seq_Nanopore/GRCh38_90_SIRV_Set3.gtf")
   )
@@ -57,20 +80,20 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   names(dge) <- names(files)
   dge <- bind_rows(dge, .id = "contrasts")
   dge <- dge %>%
-    rename(gene_name = gene, gene_id = SYMBOL)
-
-  ## METADATA ####
-  metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
-  metadata %<>%
-    filter(!is.na(Replicate)) %>%
-    id2group() <- metadata %>%
-    dplyr::select(CCG_Sample_ID, group)
+    dplyr::rename(gene_name = gene, gene_id = SYMBOL)
+  dge$contrasts <- gsub(
+    dge$contrasts,
+    pattern = "(.*)_vs_(.*)",
+    replacement = "\\1"
+  )
+  dge$contrasts <- rlang::exec(recode, !!!group_recode, .x = dge$contrasts)
+  stopifnot(rlang::is_empty(setdiff(dge$contrasts, group_recode)))
 
   ## Gene counts ####
   gene_counts <- readRDS(file.path(base_path, "phase2/data/dge_dds.RDS"))
   gene_counts <- estimateSizeFactors(gene_counts)
   gene_counts <- counts(gene_counts, normalized = TRUE)
-  colnames(gene_counts) <- metadata$group
+  # colnames(gene_counts) <- metadata$group
   gene_counts %<>%
     as_tibble(rownames = "gene_name") %>%
     left_join(anno[c("gene_name", "gene_id")], by = "gene_name")
