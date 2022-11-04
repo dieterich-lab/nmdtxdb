@@ -15,7 +15,9 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   ## METADATA ####
   metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
   metadata %<>%
-    filter(!is.na(Replicate))
+    filter(!is.na(Replicate)) %>%
+    mutate(contrasts = ifelse(str_detect(group, 'Luc', negate = TRUE), group, NA)) %>%
+    tidyr::fill(contrasts, .direction = 'up')
 
   id2group <- metadata %>%
     dplyr::select(CCG_Sample_ID, group)
@@ -53,9 +55,7 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
     replacement = "\\1"
   )
   dtu$contrasts <- rlang::exec(recode, !!!group_recode, .x = dtu$contrasts)
-  stopifnot(setdiff(dtu$contrasts, group_recode))
-
-
+  stopifnot(all(dtu$contrasts %in% group_recode))
 
   ## GTF ####
   # gtf <- rtracklayer::import(
@@ -94,36 +94,36 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
     replacement = "\\1"
   )
   dge$contrasts <- rlang::exec(recode, !!!group_recode, .x = dge$contrasts)
-  stopifnot(rlang::is_empty(setdiff(dge$contrasts, group_recode)))
-  dge %>%
-    left_join(anno %>% select_())
+  stopifnot(all(dge$contrasts %in% group_recode))
 
   ## Gene counts ####
   gene_counts <- readRDS(file.path(base_path, "phase2/data/dge_dds.RDS"))
   gene_counts <- estimateSizeFactors(gene_counts)
   gene_counts <- counts(gene_counts, normalized = TRUE)
-  # colnames(gene_counts) <- metadata$group
   gene_counts %<>%
-    as_tibble(rownames = "gene_name") %>%
-    left_join(anno[c("gene_name", "gene_id")], by = "gene_name")
+    as_tibble(rownames = "gene_id") %>%
+    left_join(anno %>% select(gene_name, gene_id), by = "gene_id") %>%
+    tidyr::pivot_longer(-c(gene_name, gene_id)) %>%
+    mutate(name = str_remove(name, "_[12345]")) %>%
+    left_join(metadata %>% select(group, contrasts), by=c("name"="group"))
+
 
   ## Transcript counts ####
   tx_counts <- readRDS(file.path(base_path, "phase2/data/tx_counts.RDS")) %>%
     DRIMSeq::counts() %>%
-    dplyr::rename(transcript_id = feature_id, gene_name = gene_id) %>%
+    dplyr::rename(transcript_id = feature_id) %>%
     left_join(anno) %>%
-    dplyr::filter(transcript_id %in% unique(dtu$transcript_id)) # %>%
-  # select(-c(gene_name, transcript_id, gene_id)) %>%
-  # tidyr::pivot_longer(-c(transcript_name)) %>%
-  # collect() %>%
-  # mutate(group = str_sub(name, start = 1, end = -3)) %>%
-  # group_by(name) %>%
-  # mutate(total = sum(value, na.rm = TRUE)) %>%
-  # filter(total != 0) %>%
-  # ungroup() %>%
-  # mutate(usage = value / total) %>%
-  # collect() %>%
-
+    dplyr::filter(transcript_id %in% unique(dtu$transcript_id))  %>%
+    select(-c(gene_id)) %>%
+    tidyr::pivot_longer(-c(gene_name, transcript_name, transcript_id)) %>%
+    collect() %>%
+    mutate(name = str_replace_all(name, "[.]", "-") %>% str_remove(., "_[12345]")) %>%
+    group_by(gene_name, name) %>%
+    mutate(total = sum(value, na.rm = TRUE)) %>%
+    filter(total != 0) %>%
+    ungroup() %>%
+    mutate(usage = value / total) %>%
+    left_join(metadata %>% select(group, contrasts), by=c("name"="group"))
 
   dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
   dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
