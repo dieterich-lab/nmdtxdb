@@ -29,18 +29,17 @@ mod_transcript_ui <- function(id) {
 #' @importFrom reactable getReactableState renderReactable
 #' @import stringr
 #' @noRd
-mod_transcript_server <- function(id, conn, transcript_name, contrast) {
+mod_transcript_server <- function(id, conn, t_name, contrast) {
   moduleServer(id, function(input, output, session) {
 
     output$table_transcript <- renderReactable({
       conn %>%
         tbl("dtu2") %>%
-        filter(transcript_name == !!transcript_name,
+        filter(transcript_name %in% !!t_name,
                contrasts %in% !!contrast) %>%
-        select(transcript_id, contrasts, transcript_biotype, padj, log2fold) %>%
+        select(transcript_name, contrasts, transcript_biotype, padj, log2fold) %>%
         distinct() %>%
         collect() %>%
-        mutate(contrasts = str_sub(contrasts, 5)) %>%
         reactable(
           .,
           language = reactableLang(

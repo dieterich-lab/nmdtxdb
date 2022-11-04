@@ -56,14 +56,16 @@ app_server <- function(input, output, session) {
     c(anno(), contrast()),
     ignoreNULL = TRUE,
     {
+
+      #send_toast(msg = "Loading selection.", error = "warning", session = session)
+
       gene_id <- anno()[[1, "gene_id"]]
       gene_name <- anno()[[1, "gene_name"]]
-      transcript_id <- anno()[[1, "transcript_id"]]
-      transcript_name <- anno()[[1, "transcript_name"]]
-
+      transcript_id <- anno()[["transcript_id"]]
+      transcript_name <- anno()[["transcript_name"]]
       gene_info(render_gene_card(gene_id, conn))
       mod_gene_server("mod_gene1", conn, gene_name, contrast())
-      mod_transcript_structure_server("mod_transcript_structure", conn, gene_name, contrast())
+      mod_transcript_structure_server("mod_transcript_structure", conn, gene_name, transcript_name, contrast())
       mod_transcript_server("mod_transcript1", conn, transcript_name, contrast())
     }
   )
