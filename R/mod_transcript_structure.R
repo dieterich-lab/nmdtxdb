@@ -3,8 +3,8 @@ adv_grid <- create_grid(
     c("top"),
     c("bottom_left", "bottom_right")
   ),
-  c("auto", "auto", "auto"),
-  c("300px", "300px")
+  c("50%", "50%", '50%'),
+  c("auto", "auto", "auto")
 )
 
 
@@ -48,17 +48,18 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
       conn %>%
         tbl("gene_counts2") %>%
         filter(gene_id == !!g_id) %>%
+        filter(contrasts %in% !!contrast) %>%
         collect() %>%
         plot_ly(
           type = "box",
           x = ~name,
           y = ~ log10_or_max(value),
-          color = ~ factor(name),
-          colors = c(I("steelblue"), I("gold"), I("forestgreen"))
+          color = ~ factor(name)
         ) %>%
         config(displayModeBar = FALSE) %>%
         layout(
           title = "Gene counts",
+          hovermode = FALSE,
           xaxis = list(
             title = "",
             showticklabels = FALSE
@@ -72,6 +73,7 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
 
       tbl(conn, "tx_counts2") %>%
         filter(transcript_name %in% !!t_name) %>%
+        filter(contrasts %in% !!contrast) %>%
         select(-c(gene_name, transcript_id)) %>%
         collect() %>%
         plot_ly(
@@ -82,15 +84,17 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
           y = ~transcript_name,
           x = ~usage,
           color = ~name,
-          colors = c(I("steelblue"), I("gold"), I("forestgreen")),
           orientation = "h",
           opacity = 0.8
         ) %>%
+        config(displayModeBar = FALSE) %>%
         layout(
           boxmode = "group",
+          hovermode = FALSE,
           title = "Transcript proportion",
           xaxis = list(title = ""),
-          showlegend = FALSE
+          yaxis = list(title = ""),
+          legend = list(orientation = "h")
         )
     })
 
@@ -110,18 +114,18 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
           xend = end,
           y = transcript_name
         )) +
-        # geom_range(
-        #   aes(
-        #     fill = transcript_biotype,
-        #     height = 0.25
-        #   )
-        # ) +
-        # geom_range(
-        #   data = cds,
-        #   aes(
-        #     fill = transcript_biotype
-        #   )
-        # ) +
+        geom_range(
+          aes(
+            fill = transcript_biotype,
+            height = 0.25
+          )
+        ) +
+        geom_range(
+          data = cds,
+          aes(
+            fill = transcript_biotype
+          )
+        ) +
         geom_intron(
           data = introns,
           aes(strand = strand),
@@ -129,7 +133,8 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
         theme_minimal() +
         labs(y = "") +
         theme(
-          axis.ticks = element_blank()
+          axis.ticks = element_blank(),
+          axis.text.x = element_blank()
         )
     })
   })
