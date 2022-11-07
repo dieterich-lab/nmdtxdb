@@ -3,7 +3,7 @@ adv_grid <- create_grid(
     c("top"),
     c("bottom_left", "bottom_right")
   ),
-  c("50%", "50%", '50%'),
+  c("50%", "50%", "50%"),
   c("auto", "auto", "auto")
 )
 
@@ -24,8 +24,8 @@ mod_transcript_structure_ui <- function(id) {
 
   grid(
     adv_grid,
-    top = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
-    bottom_left = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
+    top = plotlyOutput(ns("trancript_proportions")) %>% shinycssloaders::withSpinner(),
+    bottom_left = plotlyOutput(ns("gene_counts")) %>% shinycssloaders::withSpinner(),
     bottom_right = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner()
   )
 }
@@ -41,13 +41,12 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
+mod_transcript_structure_server <- function(id, conn, g_id, g_name, t_name, contrast) {
   moduleServer(id, function(input, output, session) {
-
     output$gene_counts <- renderPlotly({
       conn %>%
         tbl("gene_counts2") %>%
-        filter(gene_id == !!g_id) %>%
+        filter(gene_name == !!g_name) %>%
         filter(contrasts %in% !!contrast) %>%
         collect() %>%
         plot_ly(
@@ -70,7 +69,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_name, contrast) {
     })
 
     output$trancript_proportions <- renderPlotly({
-
       tbl(conn, "tx_counts2") %>%
         filter(transcript_name %in% !!t_name) %>%
         filter(contrasts %in% !!contrast) %>%

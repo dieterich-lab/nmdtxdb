@@ -16,8 +16,8 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
   metadata %<>%
     filter(!is.na(Replicate)) %>%
-    mutate(contrasts = ifelse(str_detect(group, 'Luc', negate = TRUE), group, NA)) %>%
-    tidyr::fill(contrasts, .direction = 'up')
+    mutate(contrasts = ifelse(str_detect(group, "Luc", negate = TRUE), group, NA)) %>%
+    tidyr::fill(contrasts, .direction = "up")
 
   id2group <- metadata %>%
     dplyr::select(CCG_Sample_ID, group)
@@ -38,7 +38,6 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   files <- Sys.glob(file.path(base_path, "phase2/results/dtu/dtu*.xlsx"))
   names(files) <- tools::file_path_sans_ext(basename(files))
   dtu <- lapply(files, openxlsx::read.xlsx)
-  # dtu <- lapply(dtu, tibble::rownames_to_column)
   dtu <- bind_rows(dtu, .id = "contrasts")
   dtu <- dtu %>% select(!starts_with("countData"))
   dtu <- dtu %>% select(1:8, starts_with("log2fold_"), "genomicData")
@@ -70,7 +69,8 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   dtu %<>%
     left_join(
       gtf %>% select("transcript_name", "transcript_id", "transcript_biotype"),
-      by = c("transcript_id"))
+      by = c("transcript_id")
+    )
 
   ## Annotation
   anno <- gtf %>%
@@ -101,11 +101,10 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
   gene_counts <- estimateSizeFactors(gene_counts)
   gene_counts <- counts(gene_counts, normalized = TRUE)
   gene_counts %<>%
-    as_tibble(rownames = "gene_id") %>%
-    left_join(anno %>% select(gene_name, gene_id), by = "gene_id") %>%
-    tidyr::pivot_longer(-c(gene_name, gene_id)) %>%
+    as_tibble(rownames = "gene_name") %>%
+    tidyr::pivot_longer(-gene_name) %>%
     mutate(name = str_remove(name, "_[12345]")) %>%
-    left_join(metadata %>% select(group, contrasts), by=c("name"="group"))
+    left_join(metadata %>% select(group, contrasts), by = c("name" = "group"))
 
 
   ## Transcript counts ####
@@ -113,7 +112,7 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
     DRIMSeq::counts() %>%
     dplyr::rename(transcript_id = feature_id) %>%
     left_join(anno) %>%
-    dplyr::filter(transcript_id %in% unique(dtu$transcript_id))  %>%
+    dplyr::filter(transcript_id %in% unique(dtu$transcript_id)) %>%
     select(-c(gene_id)) %>%
     tidyr::pivot_longer(-c(gene_name, transcript_name, transcript_id)) %>%
     collect() %>%
@@ -123,7 +122,7 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
     filter(total != 0) %>%
     ungroup() %>%
     mutate(usage = value / total) %>%
-    left_join(metadata %>% select(group, contrasts), by=c("name"="group"))
+    left_join(metadata %>% select(group, contrasts), by = c("name" = "group"))
 
   dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
   dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
@@ -136,4 +135,3 @@ name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptom
 
   dbDisconnect(conn)
 }
-
