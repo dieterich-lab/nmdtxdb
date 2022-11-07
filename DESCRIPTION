@@ -11,6 +11,7 @@ Imports:
     DBI,
     DESeq2,
     dplyr,
+    DRIMSeq,
     forcats,
     ggplot2,
     ggridges,
@@ -23,12 +24,14 @@ Imports:
     openxlsx,
     plotly,
     reactable,
+    rlang,
     RPostgres,
     rtracklayer,
     shiny (>= 1.7.2),
     shiny.semantic,
     shinycssloaders,
     stringr,
+    tibble,
     tidyr,
     tools
 Suggests: 

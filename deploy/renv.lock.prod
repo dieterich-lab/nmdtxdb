@@ -163,6 +163,28 @@
         "locfit"
       ]
     },
+    "DRIMSeq": {
+      "Package": "DRIMSeq",
+      "Version": "1.24.0",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/DRIMSeq",
+      "git_branch": "RELEASE_3_15",
+      "git_last_commit": "07bf0d3",
+      "git_last_commit_date": "2022-04-26",
+      "Hash": "5ee32901378c0c6a3057e9778d938159",
+      "Requirements": [
+        "BiocGenerics",
+        "BiocParallel",
+        "GenomicRanges",
+        "IRanges",
+        "MASS",
+        "S4Vectors",
+        "edgeR",
+        "ggplot2",
+        "limma",
+        "reshape2"
+      ]
+    },
     "DelayedArray": {
       "Package": "DelayedArray",
       "Version": "0.22.0",
@@ -769,6 +791,21 @@
         "vctrs"
       ]
     },
+    "edgeR": {
+      "Package": "edgeR",
+      "Version": "3.38.4",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/edgeR",
+      "git_branch": "RELEASE_3_15",
+      "git_last_commit": "f5a3bb5",
+      "git_last_commit_date": "2022-08-07",
+      "Hash": "690935220186be570df6673cf412ed31",
+      "Requirements": [
+        "Rcpp",
+        "limma",
+        "locfit"
+      ]
+    },
     "ellipsis": {
       "Package": "ellipsis",
       "Version": "0.3.2",
@@ -1260,6 +1297,17 @@
         "rlang"
       ]
     },
+    "limma": {
+      "Package": "limma",
+      "Version": "3.52.4",
+      "Source": "Bioconductor",
+      "git_url": "https://git.bioconductor.org/packages/limma",
+      "git_branch": "RELEASE_3_15",
+      "git_last_commit": "3226c29",
+      "git_last_commit_date": "2022-09-26",
+      "Hash": "89355064f134b79b47db214977a84d65",
+      "Requirements": []
+    },
     "locfit": {
       "Package": "locfit",
       "Version": "1.5-9.6",
@@ -1448,6 +1496,16 @@
         "viridisLite"
       ]
     },
+    "plyr": {
+      "Package": "plyr",
+      "Version": "1.8.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9c17c6ee41639ebdc1d7266546d3b627",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
     "png": {
       "Package": "png",
       "Version": "0.1-7",
@@ -1557,6 +1615,18 @@
       "Repository": "CRAN",
       "Hash": "227045be9aee47e6dda9bb38ac870d67",
       "Requirements": []
+    },
+    "reshape2": {
+      "Package": "reshape2",
+      "Version": "1.4.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bb5996d0bd962d214a11140d77589917",
+      "Requirements": [
+        "Rcpp",
+        "plyr",
+        "stringr"
+      ]
     },
     "restfulr": {
       "Package": "restfulr",

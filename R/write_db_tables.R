@@ -8,8 +8,9 @@
 #' @importFrom openxlsx read.xlsx
 #' @importFrom magrittr "%>%"
 #' @importFrom tibble deframe
-conn <- nmdtx:::connect_db()
 name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
+  conn <- nmdtx:::connect_db()
+
   dbListTables(conn)
 
   ## METADATA ####
