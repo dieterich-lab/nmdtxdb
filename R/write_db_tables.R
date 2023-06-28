@@ -90,6 +90,19 @@ populate_db <- function() {
           )
   )
 
+  anno <- readRDS(file.path(base_path, 'tx2gene.RDS'))
+  copy_to(conn,
+          anno,
+          "anno",
+          temporary = FALSE,
+          indexes = list(
+            "transcript_id",
+            "gene_name",
+            "gene_id",
+            "ref_gene_id"
+          )
+  )
+
 
 
   dtu %<>%
@@ -97,11 +110,6 @@ populate_db <- function() {
       gtf %>% select("transcript_name", "transcript_id", "transcript_biotype"),
       by = c("transcript_id")
     )
-
-  ## Annotation
-  anno <- gtf %>%
-    filter(type == "transcript") %>%
-    dplyr::select(transcript_id, gene_id, transcript_name, gene_name)
 
   ## DGE ####
   files <- Sys.glob(file.path(base_path, "dge_results/*.xlsx"))
@@ -153,7 +161,6 @@ populate_db <- function() {
   dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
   dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
   dbWriteTable(conn, "dge2", dge, overwrite = TRUE)
-  dbWriteTable(conn, "anno2", anno, overwrite = TRUE)
   dbWriteTable(conn, "gene_counts2", gene_counts, overwrite = TRUE)
   dbWriteTable(conn, "tx_counts2", tx_counts, overwrite = TRUE)
 
