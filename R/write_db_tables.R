@@ -76,14 +76,21 @@ populate_db <- function() {
   stopifnot(all(dtu$contrasts %in% group_recode))
 
   ## GTF ####
-  # gtf <- rtracklayer::import(
-  #   file.path(base_path, "phase2/stringtie_merge/merged_each.gtf"))
-  gtf <- rtracklayer::import(
-    file.path(base_path, "../DFG_seq_Nanopore/GRCh38_90_SIRV_Set3.gtf")
+  gtf <- readRDS(file.path(base_path, 'gtf.RDS'))
+  gtf <- as.data.frame(gtf)
+
+  copy_to(conn,
+          gtf,
+          "gtf",
+          temporary = FALSE,
+          indexes = list(
+            "transcript_id",
+            "gene_name",
+            "ref_gene_id"
+          )
   )
 
-  gtf <- as.data.frame(gtf) %>%
-    dplyr::filter(transcript_id %in% unique(dtu$transcript_id))
+
 
   dtu %<>%
     left_join(
@@ -145,10 +152,8 @@ populate_db <- function() {
 
   dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
   dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
-  dbWriteTable(conn, "gtf2", gtf, overwrite = TRUE)
   dbWriteTable(conn, "dge2", dge, overwrite = TRUE)
   dbWriteTable(conn, "anno2", anno, overwrite = TRUE)
-  dbWriteTable(conn, "metadata", metadata, overwrite = TRUE)
   dbWriteTable(conn, "gene_counts2", gene_counts, overwrite = TRUE)
   dbWriteTable(conn, "tx_counts2", tx_counts, overwrite = TRUE)
 
