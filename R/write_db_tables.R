@@ -8,17 +8,35 @@
 #' @importFrom openxlsx read.xlsx
 #' @importFrom magrittr "%>%"
 #' @importFrom tibble deframe
-name <- function(base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome") {
-  conn <- nmdtx:::connect_db()
+#' @importFrom tidyr fill
+populate_db <- function() {
 
+  base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/"
+  conn <- nmdtx:::connect_db()
+  setwd(base_path)
   dbListTables(conn)
 
+
   ## METADATA ####
-  metadata <- read.csv(file.path(base_path, "phase2/config/metadata_w_files.csv"))
+  metadata <- readRDS(file.path(base_path, 'metadata.RDS'))
+
   metadata %<>%
     filter(!is.na(Replicate)) %>%
     mutate(contrasts = ifelse(str_detect(group, "Luc", negate = TRUE), group, NA)) %>%
-    tidyr::fill(contrasts, .direction = "up")
+    fill(contrasts, .direction = "up")
+
+  # dbWriteTable(conn, "metadata", metadata, overwrite = TRUE)
+  #
+  copy_to(conn,
+          metadata,
+          "metadata",
+          temporary = FALSE,
+          indexes = list(
+            "contrasts",
+            "CCG_Sample_ID"
+          )
+  )
+
 
   id2group <- metadata %>%
     dplyr::select(CCG_Sample_ID, group)
