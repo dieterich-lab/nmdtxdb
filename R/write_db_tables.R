@@ -13,11 +13,9 @@ populate_db <- function() {
 
   base_path = "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/"
   conn <- nmdtx:::connect_db()
-  setwd(base_path)
   dbListTables(conn)
 
 
-  ## METADATA ####
   metadata <- readRDS(file.path(base_path, 'metadata.RDS'))
 
   metadata %<>%
@@ -25,8 +23,6 @@ populate_db <- function() {
     mutate(contrasts = ifelse(str_detect(group, "Luc", negate = TRUE), group, NA)) %>%
     fill(contrasts, .direction = "up")
 
-  # dbWriteTable(conn, "metadata", metadata, overwrite = TRUE)
-  #
   copy_to(conn,
           metadata,
           "metadata",
@@ -37,7 +33,6 @@ populate_db <- function() {
           )
   )
 
-
   id2group <- metadata %>%
     dplyr::select(CCG_Sample_ID, group)
 
@@ -46,12 +41,6 @@ populate_db <- function() {
     filter(!str_detect(Condition, "control")) %>%
     distinct() %>%
     tibble::deframe()
-
-  ## junction support from long reads ####
-  has_support <- read.csv(
-    file.path(base_path, "result_tx_supported_by_nopore_junctions.csv"),
-    row.names = 1
-  )
 
   ## DTU ####
   files <- Sys.glob(file.path(base_path, "phase2/results/dtu/dtu*.xlsx"))
@@ -90,7 +79,14 @@ populate_db <- function() {
           )
   )
 
-  anno <- readRDS(file.path(base_path, 'tx2gene.RDS'))
+  anno <- readRDS(file.path(base_path, 'tx2gene.RDS')) %>%
+    select(-keep) %>%
+    mutate(gene_name = coalesce(gene_name, gene_id)) %>%
+    group_by(gene_id) %>%
+    mutate(transcript_name = rank(transcript_id)) %>%
+    mutate(transcript_name = str_c(gene_name, transcript_name, sep = '_'))
+    # order by expression?
+
   copy_to(conn,
           anno,
           "anno",
@@ -99,11 +95,9 @@ populate_db <- function() {
             "transcript_id",
             "gene_name",
             "gene_id",
-            "ref_gene_id"
+            "transcript_name"
           )
   )
-
-
 
   dtu %<>%
     left_join(
@@ -111,58 +105,79 @@ populate_db <- function() {
       by = c("transcript_id")
     )
 
-  ## DGE ####
-  files <- Sys.glob(file.path(base_path, "dge_results/*.xlsx"))
-  names(files) <- tools::file_path_sans_ext(basename(files))
-  dge <- lapply(
-    files,
-    openxlsx::read.xlsx
-  )
-  names(dge) <- names(files)
-  dge <- bind_rows(dge, .id = "contrasts")
-  dge <- dge %>%
-    dplyr::rename(gene_name = gene, gene_id = SYMBOL)
-  dge$contrasts <- gsub(
-    dge$contrasts,
-    pattern = "(.*)_vs_(.*)",
+  dge <- readRDS(file.path(base_path, 'dge_results.RDS'))
+  dge$contrast <- gsub(
+    dge$contrast,
+    pattern = "(.*)-vs-(.*)",
     replacement = "\\1"
   )
-  dge$contrasts <- rlang::exec(recode, !!!group_recode, .x = dge$contrasts)
+  # dge$contrasts <- rlang::exec(recode, !!!group_recode, .x = dge$contrasts)
   stopifnot(all(dge$contrasts %in% group_recode))
+  copy_to(conn,
+          anno,
+          "dge",
+          temporary = FALSE,
+          indexes = list(
+            "gene_name",
+            "gene_id"
+        )
+  )
+
 
   ## Gene counts ####
-  gene_counts <- readRDS(file.path(base_path, "phase2/data/dge_dds.RDS"))
-  gene_counts <- estimateSizeFactors(gene_counts)
-  gene_counts <- counts(gene_counts, normalized = TRUE)
-  gene_counts %<>%
-    as_tibble(rownames = "gene_name") %>%
-    tidyr::pivot_longer(-gene_name) %>%
+  base_path <- "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data"
+  txi.genes <- readRDS(file.path(base_path, "gene_counts.RDS"))
+
+  dds <- DESeqDataSetFromTximport(
+    txi = txi.genes,
+    colData = metadata |> select('group'),
+    design = ~group)
+
+  dds <- DESeq(dds)
+
+  gene_counts <- counts(dds) %>%
+    as_tibble(rownames = "gene_id") %>%
+    tidyr::pivot_longer(-gene_id) %>%
     mutate(name = str_remove(name, "_[12345]")) %>%
     left_join(metadata %>% select(group, contrasts), by = c("name" = "group"))
 
+  copy_to(conn,
+          gene_counts,
+          "gene_counts",
+          temporary = FALSE,
+          indexes = list(
+            "gene_id"
+          )
+  )
+
 
   ## Transcript counts ####
-  tx_counts <- readRDS(file.path(base_path, "phase2/data/tx_counts.RDS")) %>%
+  tx_counts <- readRDS(file.path(base_path, "drimseq_data.RDS")) %>%
     DRIMSeq::counts() %>%
     dplyr::rename(transcript_id = feature_id) %>%
-    left_join(anno) %>%
-    dplyr::filter(transcript_id %in% unique(dtu$transcript_id)) %>%
-    select(-c(gene_id)) %>%
-    tidyr::pivot_longer(-c(gene_name, transcript_name, transcript_id)) %>%
+    left_join(anno %>% select(-ref_gene_id)) %>%
     collect() %>%
+    tidyr::pivot_longer(-c(transcript_id, gene_id, gene_name, transcript_name)) %>%
     mutate(name = str_replace_all(name, "[.]", "-") %>% str_remove(., "_[12345]")) %>%
-    group_by(gene_name, name) %>%
+    group_by(gene_id, name) %>%
     mutate(total = sum(value, na.rm = TRUE)) %>%
     filter(total != 0) %>%
     ungroup() %>%
     mutate(usage = value / total) %>%
     left_join(metadata %>% select(group, contrasts), by = c("name" = "group"))
+  # see tx_counts to find a few missing contrasts due to misspell groups
 
-  dbWriteTable(conn, "has_support2", has_support, overwrite = TRUE)
-  dbWriteTable(conn, "dtu2", dtu, overwrite = TRUE)
-  dbWriteTable(conn, "dge2", dge, overwrite = TRUE)
-  dbWriteTable(conn, "gene_counts2", gene_counts, overwrite = TRUE)
-  dbWriteTable(conn, "tx_counts2", tx_counts, overwrite = TRUE)
+  copy_to(conn,
+          tx_counts %>% distinct(),
+          "tx_counts",
+          temporary = FALSE,
+          indexes = list(
+            "transcript_id",
+            "gene_name",
+            "gene_id",
+            "transcript_name"
+          )
+  )
 
   dbDisconnect(conn)
 }
