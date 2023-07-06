@@ -18,7 +18,7 @@ mod_intro_ui <- function(id){
 
   grid(
     this_grid,
-    left = includeMarkdown("inst/intro.md"),
+    left = includeMarkdown(app_sys("app/www/intro.md"))
   )
 }
 
