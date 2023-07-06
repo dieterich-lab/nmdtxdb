@@ -38,7 +38,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
     data <- reactive({
       conn %>%
-        tbl("dge2") %>%
+        tbl("dge") %>%
         filter(contrasts %in% !!contrast) %>%
         select(contrasts, log2FoldChange, padj, gene_name) %>%
         collect()
@@ -49,7 +49,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
       data() %>%
         filter(gene_name == !!gene_name) %>%
         mutate_at(vars(padj, log2FoldChange), ~ format(round(., digits = 2), nsmall = 2)) %>%
-        mutate(contrasts = fct_reorder(contrasts, nchar(contrasts))) %>%
+        mutate(contrasts = fct_reorder(contrasts, nchar(contrast))) %>%
         arrange(desc(contrasts)) %>%
         reactable(
           .,
@@ -66,7 +66,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
             )
           ),
           columns = list(
-            contrasts = colDef(
+            contrast = colDef(
               width = 200,
             )
           ),

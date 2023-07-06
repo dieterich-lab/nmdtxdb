@@ -3,7 +3,7 @@
 #'
 #' @param ... arguments to pass to golem_opts.
 #' See `?golem::get_golem_options` for more details.
-#' see https://github.com/ColinFay/golemexamples/blob/master/golemfuture/app.R
+#'
 #' @inheritParams shiny::shinyApp
 #'
 #' @export

@@ -41,23 +41,23 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, g_id, g_name, t_name, contrast) {
+mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast) {
   moduleServer(id, function(input, output, session) {
     output$gene_counts <- renderPlotly({
       conn %>%
-        tbl("gene_counts2") %>%
-        filter(gene_name == !!g_name) %>%
+        tbl("gene_counts") %>%
+        filter(gene_id == !!g_id) %>%
         filter(contrasts %in% !!contrast) %>%
         collect() %>%
         plot_ly(
           type = "box",
-          x = ~name,
-          y = ~ log10_or_max(value),
-          color = ~ factor(name)
+          x = ~group,
+          y = ~log10_or_max(value),
+          color = ~factor(group)
         ) %>%
         config(displayModeBar = FALSE) %>%
         layout(
-          title = "Gene counts",
+          title = "Gene expression",
           hovermode = FALSE,
           xaxis = list(
             title = "",
@@ -69,27 +69,27 @@ mod_transcript_structure_server <- function(id, conn, g_id, g_name, t_name, cont
     })
 
     output$trancript_proportions <- renderPlotly({
-      tbl(conn, "tx_counts2") %>%
-        filter(transcript_name %in% !!t_name) %>%
+
+      tbl(conn, "tx_counts") %>%
+        filter(transcript_id %in% !!t_id) %>%
         filter(contrasts %in% !!contrast) %>%
-        select(-c(gene_name, transcript_id)) %>%
+        left_join(tbl(conn, "anno"), by = c("gene_id", "transcript_id")) %>%
         collect() %>%
         plot_ly(
           type = "box",
           boxpoints = "all",
           jitter = 1,
           pointpos = 0,
-          y = ~transcript_name,
+          y = ~ref_transcript_name,
           x = ~usage,
-          color = ~name,
-          orientation = "h",
-          opacity = 0.8
+          color = ~group,
+          orientation = "h"
         ) %>%
         config(displayModeBar = FALSE) %>%
         layout(
           boxmode = "group",
           hovermode = FALSE,
-          title = "Transcript proportion",
+          title = "Transcript usage per group",
           xaxis = list(title = ""),
           yaxis = list(title = ""),
           legend = list(orientation = "h")
@@ -97,6 +97,10 @@ mod_transcript_structure_server <- function(id, conn, g_id, g_name, t_name, cont
     })
 
     output$gene_structure <- renderPlot({
+
+      # anno <- tbl(conn, 'anno') %>%
+      #   select(gene_id, transcript_id, ref_transcript_id)
+
       gtf <- conn %>%
         tbl("gtf") %>%
         filter(gene_id == !!g_id) %>%
@@ -110,18 +114,18 @@ mod_transcript_structure_server <- function(id, conn, g_id, g_name, t_name, cont
         ggplot(aes(
           xstart = start,
           xend = end,
-          y = transcript_name
+          y = transcript_id
         )) +
         geom_range(
           aes(
-            fill = transcript_biotype,
+            # fill = transcript_biotype,
             height = 0.25
           )
         ) +
         geom_range(
           data = cds,
           aes(
-            fill = transcript_biotype
+            # fill = transcript_biotype
           )
         ) +
         geom_intron(

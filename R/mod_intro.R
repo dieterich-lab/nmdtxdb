@@ -7,6 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @import markdown
 mod_intro_ui <- function(id){
   ns <- NS(id)
   this_grid <- create_grid(

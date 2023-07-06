@@ -1,5 +1,3 @@
-# README
-
 docker build -f Dockerfile_base --progress=plain -t nmdtx_base .
 docker build -f Dockerfile --progress=plain -t nmdtx:latest .
 docker run -p 3838:3838 nmdtx:latest

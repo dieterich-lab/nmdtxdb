@@ -25,7 +25,17 @@ app_ui <- function(request) {
           ),
           selectizeInput(
             inputId = "contrast_select",
-            label = h3("Pick contrasts:"),
+            label = h3("Contrasts:"),
+            choices = NULL,
+            multiple = TRUE,
+            options = list(
+              create = FALSE,
+              plugins = list("remove_button")
+            )
+          ),
+          selectizeInput(
+            inputId = "cds_source_select",
+            label = h3("CDS sources:"),
             choices = NULL,
             multiple = TRUE,
             options = list(
@@ -51,6 +61,11 @@ app_ui <- function(request) {
           width = 10,
           tabset(
             tabs = list(
+              list(
+                menu = "Introduction",
+                content = mod_intro_ui("intro_1"),
+                id = "intro_tab"
+              ),
               list(
                 menu = "Gene expression",
                 content = mod_gene_ui("mod_gene1"),

@@ -6,3 +6,4 @@ golem::document_and_reload()
 # lintr::lint_package()
 # styler::style_pkg()
 run_app()
+

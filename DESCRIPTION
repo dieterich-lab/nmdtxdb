@@ -20,20 +20,21 @@ Imports:
     htmltools,
     httr,
     jsonlite,
+    knitr,
     magrittr,
+    markdown,
     openxlsx,
     plotly,
     reactable,
-    rlang,
+    reshape2,
     RPostgres,
-    rtracklayer,
     shiny (>= 1.7.2),
     shiny.semantic,
     shinycssloaders,
     stringr,
     tibble,
     tidyr,
-    tools
+    tidyverse
 Suggests: 
     spelling,
     testthat (>= 3.0.0)
