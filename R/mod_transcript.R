@@ -32,63 +32,62 @@ mod_transcript_ui <- function(id) {
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     output$table_transcript <- renderReactable({
+      dte <- conn %>%
+        tbl("dte") %>%
+        filter(
+          transcript_id %in% !!tx,
+          contrasts %in% !!contrast
+        ) %>%
+        select(transcript_id, contrasts, padj, log2fold)
+
 
       gtf <- conn %>%
         tbl("gtf") %>%
         filter(
-          type == 'transcript'
-          # transcript_id %in% !!tx,
-          # cds_source %in% !!cds
-          ) %>%
+          transcript_id %in% !!tx,
+          type == "transcript",
+          cds_source %in% !!cds
+        ) %>%
         select(transcript_id, cds_source, lr_support, color, class_code) %>%
-        mutate(PTC = ifelse(color == '#FF0000', "TRUE", "FALSE")) %>%
+        mutate(PTC = as.character(color == "#FF0000")) %>%
         select(-color)
 
-      conn %>%
-          tbl("dte") %>%
-          filter(
-            transcript_id %in% !!tx,
-            contrasts %in% !!contrast
-          ) %>%
-          select(transcript_id, contrasts, padj, log2fold) %>%
-          left_join(gtf, by="transcript_id") %>%
-          collect() %>%
-          mutate(
-            log2fold = round(log2fold, 2),
-            padj = round(-log10(padj), 2)) %>%
-          reactable(
-            .,
-            language = reactableLang(
-            filterPlaceholder = "Filter"),
-            filterable = TRUE,
-            striped = TRUE,
-            defaultSorted = c("padj"),
-            showPageSizeOptions = TRUE,
-            defaultPageSize = 5,
-            pageSizeOptions = c(5, 10, 25, 50),
-            highlight = TRUE,
-            wrap = FALSE,
-            rowStyle = list(cursor = "pointer"),
-            theme = reactableTheme(
-              stripedColor = "#f6f8fa",
-              highlightColor = "#f0f5f9",
-              cellPadding = "8px 12px",
-              rowSelectedStyle = list(
-                backgroundColor = "#eee",
-                boxShadow = "inset 2px 0 0 0 #FF0000"
-              )
-            ),
+      gtf %>%
+        left_join(dte, by = "transcript_id") %>%
+        collect() %>%
+        mutate(
+          log2fold = round(log2fold, 2),
+          padj = padj %>% scales::scientific()
+        ) %>%
+        reactable(
+          .,
+          language = reactableLang(
+            filterPlaceholder = "Filter"
+          ),
+          filterable = TRUE,
+          striped = TRUE,
+          defaultSorted = c("padj"),
+          showPageSizeOptions = TRUE,
+          defaultPageSize = 10,
+          pageSizeOptions = c(5, 10, 25, 50),
+          highlight = TRUE,
+          wrap = FALSE,
+          theme = reactableTheme(
+            highlightColor = "#FFFFBF",
+            cellPadding = "8px 12px"
+          ),
           defaultColDef = colDef(
             sortNALast = TRUE
           ),
           columns =
             list(
-            transcript_id = colDef(
-              width = 180
-            ),
-            contrasts = colDef(
-              width = 200
-            ))
+              transcript_id = colDef(
+                width = 180
+              ),
+              contrasts = colDef(
+                width = 200
+              )
+            )
           #   padj = colDef(
           #     format = colFormat(digits = 2),
           #     filterable = FALSE
