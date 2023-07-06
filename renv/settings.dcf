@@ -1,6 +1,6 @@
 bioconductor.version:
 external.libraries:
-ignored.packages: nmdtx
+ignored.packages: nmdtx, DelayedArray, DelayedArray, KEGGREST, BiocGenerics, conflicted, SummarizedExperiment, geneplotter,  markdown,  annotate,  MatrixGenerics,  Biobase, genefilter, edgeR,  GenomeInfoDb,  modelr,  Biostrings,  S4Vectors, zlibbioc, DESeq2, XVector,  GenomicRanges, AnnotationDbi,  IRanges, DRIMSeq,  BiocParallel,  openxlsx,  limma, GenomeInfoDbData, BiocManager,  BiocVersion
 package.dependency.fields: Imports, Depends, LinkingTo
 r.version:
 snapshot.type: implicit
