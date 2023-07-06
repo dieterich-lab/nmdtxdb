@@ -52,8 +52,8 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
         plot_ly(
           type = "box",
           x = ~group,
-          y = ~log10_or_max(value),
-          color = ~factor(group)
+          y = ~ log10_or_max(value),
+          color = ~ factor(group)
         ) %>%
         config(displayModeBar = FALSE) %>%
         layout(
@@ -69,7 +69,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
     })
 
     output$trancript_proportions <- renderPlotly({
-
       tbl(conn, "tx_counts") %>%
         filter(transcript_id %in% !!t_id) %>%
         filter(contrasts %in% !!contrast) %>%
@@ -106,14 +105,15 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
         filter(gene_id == !!g_id) %>%
         collect()
 
-      transcript <- gtf %>% dplyr::filter(type == "transcript") %>%
+      transcript <- gtf %>%
+        dplyr::filter(type == "transcript") %>%
         filter(cds_source %in% cds) %>%
-        mutate(PTC = as.character(color != '#000000'))
+        mutate(PTC = as.character(color == "#FF0000"))
 
       gtf <- gtf %>%
         select(-c(cds_source, color)) %>%
         dplyr::filter(type != "transcript") %>%
-        left_join(transcript %>% select(cds_source, PTC, Name), by='Name') %>%
+        left_join(transcript %>% select(cds_source, PTC, Name), by = "Name") %>%
         filter(!is.na(cds_source))
 
       exons <- gtf %>% dplyr::filter(type == "exon")
@@ -142,14 +142,14 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
           data = introns,
           aes(strand = strand),
         ) +
-        scale_fill_manual(values=feat_colors) +
+        scale_fill_manual(values = feat_colors) +
         theme_minimal() +
         facet_wrap(~cds_source, ncol = 1, scales = "free_y", drop = TRUE) +
         labs(y = "") +
         theme(
           axis.ticks = element_blank(),
           axis.text.x = element_blank(),
-          legend.position='top'
+          legend.position = "top"
         )
     })
   })
