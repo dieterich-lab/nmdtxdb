@@ -36,15 +36,15 @@ app_server <- function(input, output, session) {
   updateSelectizeInput(
     session,
     "contrast_select",
-  #   choices = cbind(name = rownames(metadata), metadata),
-  #   options = list(render = I(
-  #     '{
-  #   option: function(item, escape) {
-  #     return "<div><strong>" + escape(item.name) + "</strong> (" +
-  #            "KD: "  ")"
-  #   }
-  # }')),
-  choices = c(
+    #   choices = cbind(name = rownames(metadata), metadata),
+    #   options = list(render = I(
+    #     '{
+    #   option: function(item, escape) {
+    #     return "<div><strong>" + escape(item.name) + "</strong> (" +
+    #            "KD: "  ")"
+    #   }
+    # }')),
+    choices = c(
       "HEK_NoKO_SMG5KD-KD_Z023-vs-HEK_NoKO_LucKD-KD_Z023",
       "HEK_NoKO_SMG6+SMG7KD-KD_Z023-vs-HEK_NoKO_LucKD-KD_Z023",
       "HEK_SMG7KO_SMG5KD-KD_Z245-vs-HEK_SMG7KO_LucKD-KD_Z245",
@@ -53,7 +53,8 @@ app_server <- function(input, output, session) {
       "HEK_SMG7KO_SMG6KD-KD_Z319-vs-HEK_SMG7KO_LucKD-KD_Z319",
       "HeLa_NoKO_SMG6+SMG7KD-KD_Z021-vs-HeLa_NoKO_LucKD-KD_Z021",
       "MCF7_NoKO_SMG6+SMG7KD-KD-vs-MCF7_NoKO_LucKD-KD",
-      "U2OS_NoKO_SMG6+SMG7KD-KD-vs-U2OS_NoKO_LucKD-KD"),
+      "U2OS_NoKO_SMG6+SMG7KD-KD-vs-U2OS_NoKO_LucKD-KD"
+    ),
     server = TRUE,
     selected = INITIAL_CONTRAST,
   )
@@ -62,7 +63,8 @@ app_server <- function(input, output, session) {
     session,
     "cds_source_select",
     choices = c(
-      "ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
+      "ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"
+    ),
     server = TRUE,
     selected = "ensembl",
   )
@@ -99,12 +101,15 @@ app_server <- function(input, output, session) {
       transcript_name <- anno()[["ref_transcript_name"]]
       gene_info(render_gene_card(ref_gene_id, conn))
       mod_gene_server(
-        "mod_gene1", conn, gene_name, contrast())
+        "mod_gene1", conn, gene_name, contrast()
+      )
       mod_transcript_structure_server(
         "mod_transcript_structure", conn, gene_id, transcript_id, contrast(),
-        cds_source())
+        cds_source()
+      )
       mod_transcript_server(
-        "mod_transcript1", conn, transcript_id, contrast(), cds_source())
+        "mod_transcript1", conn, transcript_id, contrast(), cds_source()
+      )
     }
   )
 
@@ -112,5 +117,4 @@ app_server <- function(input, output, session) {
     validate(need(input$gene_select, "Waiting selection"))
     req(gene_info())
   })
-
 }
