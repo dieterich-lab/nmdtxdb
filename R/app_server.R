@@ -98,9 +98,13 @@ app_server <- function(input, output, session) {
       transcript_id <- anno()[["transcript_id"]]
       transcript_name <- anno()[["ref_transcript_name"]]
       gene_info(render_gene_card(ref_gene_id, conn))
-      mod_gene_server("mod_gene1", conn, gene_name, contrast())
-      mod_transcript_structure_server("mod_transcript_structure", conn, gene_id, transcript_id, contrast())
-      mod_transcript_server("mod_transcript1", conn, transcript_id, contrast(), cds_source())
+      mod_gene_server(
+        "mod_gene1", conn, gene_name, contrast())
+      mod_transcript_structure_server(
+        "mod_transcript_structure", conn, gene_id, transcript_id, contrast(),
+        cds_source())
+      mod_transcript_server(
+        "mod_transcript1", conn, transcript_id, contrast(), cds_source())
     }
   )
 

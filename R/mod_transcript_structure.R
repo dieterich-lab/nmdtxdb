@@ -41,7 +41,7 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast) {
+mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     output$gene_counts <- renderPlotly({
       conn %>%
@@ -106,37 +106,50 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast) {
         filter(gene_id == !!g_id) %>%
         collect()
 
+      transcript <- gtf %>% dplyr::filter(type == "transcript") %>%
+        filter(cds_source %in% cds) %>%
+        mutate(PTC = as.character(color != '#000000'))
+
+      gtf <- gtf %>%
+        select(-c(cds_source, color)) %>%
+        dplyr::filter(type != "transcript") %>%
+        left_join(transcript %>% select(cds_source, PTC, Name), by='Name') %>%
+        filter(!is.na(cds_source))
+
       exons <- gtf %>% dplyr::filter(type == "exon")
       cds <- gtf %>% dplyr::filter(type == "CDS")
-      introns <- to_intron(exons, group_var = "transcript_id")
-
+      introns <- to_intron(exons, group_var = "Name")
+      feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
       exons %>%
         ggplot(aes(
           xstart = start,
           xend = end,
-          y = transcript_id
+          y = Name
         )) +
         geom_range(
           aes(
-            # fill = transcript_biotype,
+            fill = PTC,
             height = 0.25
           )
         ) +
         geom_range(
           data = cds,
           aes(
-            # fill = transcript_biotype
+            fill = PTC
           )
         ) +
         geom_intron(
           data = introns,
           aes(strand = strand),
         ) +
+        scale_fill_manual(values=feat_colors) +
         theme_minimal() +
+        facet_wrap(~cds_source, ncol = 1, scales = "free_y", drop = TRUE) +
         labs(y = "") +
         theme(
           axis.ticks = element_blank(),
-          axis.text.x = element_blank()
+          axis.text.x = element_blank(),
+          legend.position='top'
         )
     })
   })
