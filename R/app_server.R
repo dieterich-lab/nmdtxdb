@@ -14,14 +14,16 @@ INITIAL_CONTRAST <- c(
 app_server <- function(input, output, session) {
   conn <- connect_db()
 
-  # metadata <- conn %>%
-  #   tbl("metadata") %>%
-  #   select(contrasts, Knockdown) %>%
-  #   filter(Knockdown != "LucKD") %>%
-  #   distinct() %>%
-  #   collect() %>%
-  #   mutate(name = str_replace(contrasts, "-vs-.*", ""))
-  # rownames(metadata) <- metadata$contrasts
+  metadata <- conn %>%
+    tbl("metadata") %>%
+    select(contrasts, Knockdown, Knockout, cellline) %>%
+    filter(Knockdown != "LucKD") %>%
+    distinct() %>%
+    collect() %>%
+    mutate(
+      name = str_replace(contrasts, "-vs-.*", ""),
+      Knockout = str_replace(Knockout, "_", "")
+    )
 
   gene_info <- reactiveVal()
 
@@ -36,24 +38,21 @@ app_server <- function(input, output, session) {
   updateSelectizeInput(
     session,
     "contrast_select",
-    #   choices = cbind(name = rownames(metadata), metadata),
-    #   options = list(render = I(
-    #     '{
-    #   option: function(item, escape) {
-    #     return "<div><strong>" + escape(item.name) + "</strong> (" +
-    #            "KD: "  ")"
-    #   }
-    # }')),
-    choices = c(
-      "HEK_NoKO_SMG5KD-KD_Z023-vs-HEK_NoKO_LucKD-KD_Z023",
-      "HEK_NoKO_SMG6+SMG7KD-KD_Z023-vs-HEK_NoKO_LucKD-KD_Z023",
-      "HEK_SMG7KO_SMG5KD-KD_Z245-vs-HEK_SMG7KO_LucKD-KD_Z245",
-      "HEK_SMG7KO_SMG5KD-KD_Z319-vs-HEK_SMG7KO_LucKD-KD_Z319",
-      "HEK_SMG7KO_SMG6KD-KD_Z245-vs-HEK_SMG7KO_LucKD-KD_Z245",
-      "HEK_SMG7KO_SMG6KD-KD_Z319-vs-HEK_SMG7KO_LucKD-KD_Z319",
-      "HeLa_NoKO_SMG6+SMG7KD-KD_Z021-vs-HeLa_NoKO_LucKD-KD_Z021",
-      "MCF7_NoKO_SMG6+SMG7KD-KD-vs-MCF7_NoKO_LucKD-KD",
-      "U2OS_NoKO_SMG6+SMG7KD-KD-vs-U2OS_NoKO_LucKD-KD"
+    choices = metadata,
+    options = list(
+      valueField = "contrasts",
+      labelField = "Knockdown",
+      render = I("{
+        option: function(item, escape) {
+          return '<div>'
+            + '<strong>' + escape(item.Knockdown) + '</strong>'
+            + '<br>'
+            + '<i>Cell-line</i>: ' + escape(item.cellline)
+            + '<br>'
+            + '<i>Knock-out</i>: ' + escape(item.Knockout)
+            + '</div>';
+        }
+      }")
     ),
     server = TRUE,
     selected = INITIAL_CONTRAST,
@@ -111,7 +110,7 @@ app_server <- function(input, output, session) {
         "mod_transcript1", conn, transcript_id, contrast(), cds_source()
       )
     }
-  )
+  ) %>% debounce(1000)
 
   output$gene_info <- renderUI({
     validate(need(input$gene_select, "Waiting selection"))
