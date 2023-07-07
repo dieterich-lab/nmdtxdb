@@ -4,7 +4,13 @@
 \alias{connect_db}
 \title{Creates a connection to the database}
 \usage{
-connect_db()
+connect_db(
+  dbname = "nmd_transcriptome_v1",
+  host = Sys.getenv("NMD_PGHOST"),
+  port = Sys.getenv("NMD_PGPORT"),
+  password = Sys.getenv("NMD_PGPASSWORD"),
+  user = Sys.getenv("NMD_PGUSER")
+)
 }
 \description{
 Creates a connection to the database
