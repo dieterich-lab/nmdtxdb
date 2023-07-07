@@ -104,7 +104,7 @@ populate_db <- function() {
   )
 
   ## GTF ####
-  gtf <- rtracklayer::import(file.path(base_path, "gtf_annotated.gtf"))
+  gtf <- import(file.path(base_path, "gtf_annotated.gtf"))
   gtf <- as.data.frame(gtf)
   gtf$transcript_id <- gsub(x = gtf$transcript_id, "\\_.*", "")
   gtf <- left_join(gtf, anno, by = "transcript_id")
