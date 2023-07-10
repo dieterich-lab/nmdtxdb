@@ -14,7 +14,7 @@ app_ui <- function(request) {
     semanticPage(
       sidebar_layout(
         sidebar_panel(
-          width = 2,
+          width = 3,
           selectizeInput(
             inputId = "gene_select",
             label = h3("Pick a gene:"),
@@ -51,11 +51,24 @@ app_ui <- function(request) {
               onclick = "window.open(
               'https://forms.gle/ZnaCwzNpFDPUHeh27',
               '_blank')",
-              class = "red",
-              icon = icon("th"),
-              label = "Feedback",
+             icon = icon("comments"),
+             label = "Feedback",
+             style="width: 100%; padding: 0; height: 40px"
             )
           ),
+          br(),
+          div(
+            action_button(
+              input_id = "action_button_tutorial",
+              # onclick = "window.open(
+              # 'https://forms.gle/ZnaCwzNpFDPUHeh27',
+              # '_blank')",
+             icon = icon("question"),
+              label = "Tutorial",
+             style="width: 100%; padding: 0; height: 40px"
+            )
+          ),
+
         ),
         main_panel(
           width = 10,
