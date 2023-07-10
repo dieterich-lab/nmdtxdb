@@ -58,12 +58,18 @@ app_server <- function(input, output, session) {
     selected = INITIAL_CONTRAST,
   )
 
+  cds_source_choices = data.frame(
+    value = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
+    label = c("Ensembl", "Gao et al., 2015", "OpenProt", "ribotish", "TransDecoder")
+  )
+
   updateSelectizeInput(
     session,
     "cds_source_select",
-    choices = c(
-      "ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"
-    ),
+    choices = cds_source_choices,
+    options = list(
+      valueField = "value",
+      labelField = "label"),
     server = TRUE,
     selected = "ensembl",
   )
