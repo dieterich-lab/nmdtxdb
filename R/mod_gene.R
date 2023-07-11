@@ -18,10 +18,9 @@
 #' @import dplyr
 #' @import ggplot2
 fc_boxplot <- function(data, index, gene_l2fc, xlims) {
-
   data <- data[index, ]
-  gene_name <- data[[1, 'gene_name']]
-  contrast <- data[[1, 'contrasts']]
+  gene_name <- data[[1, "gene_name"]]
+  contrast <- data[[1, "contrasts"]]
   data <- mutate(data, y = 1, label = sprintf("↓ %s", gene_name))
 
   gene_l2fc <- gene_l2fc %>% filter(contrasts == !!contrast)
@@ -38,12 +37,12 @@ fc_boxplot <- function(data, index, gene_l2fc, xlims) {
       size = 3.5
     ) +
     lims(x = xlims) +
-    labs(x = '', y = '') +
+    labs(x = "", y = "") +
     theme_minimal() +
     theme(
-      axis.text.y=element_blank()
+      axis.text.y = element_blank()
     )
-  htmltools::plotTag(p, alt = 'plots')
+  htmltools::plotTag(p, alt = "plots")
 }
 
 
@@ -91,46 +90,50 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
         nrow()
       validate(need(dge_nrow > 0, "Gene not tested for DE."))
 
-      xmin <- gene_l2fc %>% pull(log2FoldChange) %>% min() * 1.1
-      xmax <- gene_l2fc %>% pull(log2FoldChange) %>% max() * 1.1
+      xmin <- gene_l2fc %>%
+        pull(log2FoldChange) %>%
+        min() * 1.1
+      xmax <- gene_l2fc %>%
+        pull(log2FoldChange) %>%
+        max() * 1.1
 
       dge <- dge() %>%
         filter(gene_name == !!gene_name) %>%
         mutate(padj = padj %>% scales::scientific()) %>%
-        left_join(load_metadata(conn), by="contrasts")
+        left_join(load_metadata(conn), by = "contrasts")
 
       reactable(
-          dge,
-          highlight = TRUE,
-          wrap = FALSE,
-          details = function(index) fc_boxplot(dge, index, gene_l2fc, c(xmin, xmax)),
-          theme = reactableTheme(
-            borderColor = "#dfe2e5",
-            stripedColor = "#f6f8fa",
-            highlightColor = "#FFFFBF",
-            cellPadding = "8px 12px"),
-          columns = list(
-
-            gene_name = colDef(
-              show = FALSE
-            ),
-            Knockdown = colDef(
-              show = FALSE
-            ),
-            cellline = colDef(
-              show = FALSE
-            ),
-            Knockout  = colDef(
-              show = FALSE
-            ),
-            name = colDef(
-              show = FALSE
-            ),
-            contrasts = colDef(
-              width = 200,
-              show = TRUE,
-              html = TRUE,
-              cell = JS("
+        dge,
+        highlight = TRUE,
+        wrap = FALSE,
+        details = function(index) fc_boxplot(dge, index, gene_l2fc, c(xmin, xmax)),
+        theme = reactableTheme(
+          borderColor = "#dfe2e5",
+          stripedColor = "#f6f8fa",
+          highlightColor = "#FFFFBF",
+          cellPadding = "8px 12px"
+        ),
+        columns = list(
+          gene_name = colDef(
+            show = FALSE
+          ),
+          Knockdown = colDef(
+            show = FALSE
+          ),
+          cellline = colDef(
+            show = FALSE
+          ),
+          Knockout = colDef(
+            show = FALSE
+          ),
+          name = colDef(
+            show = FALSE
+          ),
+          contrasts = colDef(
+            width = 200,
+            show = TRUE,
+            html = TRUE,
+            cell = JS("
     function(cellInfo) {
     const kd = cellInfo.row['Knockdown']
     const cl = cellInfo.row['cellline']
@@ -141,22 +144,24 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
           '<small><i>Cell-line</i>: ' + cl +
           ';<i> KO</i>: ' + ko + ' </small></div>'
         )
-      }")),
-            padj = colDef(
-              filterable = FALSE,
-              show = TRUE,
-              align = "right"
-            ),
-            log2FoldChange = colDef(
-              name = "log2fc",
-              show = TRUE,
-              format = colFormat(digits = 2),
-              filterable = FALSE
-            )
+      }")
           ),
-          defaultColDef = colDef(
-            width = 100)
+          padj = colDef(
+            filterable = FALSE,
+            show = TRUE,
+            align = "right"
+          ),
+          log2FoldChange = colDef(
+            name = "log2fc",
+            show = TRUE,
+            format = colFormat(digits = 2),
+            filterable = FALSE
+          )
+        ),
+        defaultColDef = colDef(
+          width = 100
         )
+      )
     })
   })
 }
