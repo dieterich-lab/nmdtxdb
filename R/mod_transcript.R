@@ -66,7 +66,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           log2fold = round(log2fold, 2),
           padj = padj %>% scales::scientific(),
           class_code = case_when(
-            class_code == "=" ~ "Intron chain match",
+            class_code == "=" ~ "Complete",
             class_code == "n" ~ "Retained introns",
             class_code %in% c("c", "j", "k") ~ "Splicing variants",
             TRUE ~ "Other"
@@ -95,7 +95,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             align = "center",
             vAlign = "center",
             cell = function(value) {
-              if (value == "false") "\u274c" else "\u2714\ufe0f"
+              if (value == "false") "\u274c" else "\u2713"
             }
           ),
           lr_support = colDef(
@@ -105,7 +105,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             align = "center",
             vAlign = "center",
             cell = function(value) {
-              if (value == "FALSE") "\u274c" else "\u2714\ufe0f"
+              if (value == "FALSE") "\u274c" else "\u2713"
             }
           ),
           transcript_id = colDef(
@@ -142,15 +142,14 @@ function(cellInfo) {
 function(cellInfo) {
   const cc = cellInfo.row['class_code'];
   const ti = cellInfo.row['ref_transcript_id'];
-  const lab = '<div>' +
-    '<strong>' + cellInfo.value + '</strong> <br>' +
-    '<small><i>Match</i>: ' + cc + '</small></div>';
+  const lab1 = '<div>' + '<strong>' + cellInfo.value + '</strong> </div>'
+  const lab2 = '<div><small><i>Match</i>: ' + cc + '</small></div>';
 
   if (ti === undefined) {
     return lab;
   } else {
     const url = 'http://www.ensembl.org/id/' + ti;
-    return `<a href='${url}' target='_blank'>${lab}</a>`;
+    return `<a href='${url}' target='_blank'>${lab1}</a>${lab2}`;
   }
 }")
           ),
