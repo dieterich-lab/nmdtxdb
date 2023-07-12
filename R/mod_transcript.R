@@ -18,6 +18,7 @@ mod_transcript_ui <- function(id) {
 #' transcript view Server Functions
 #' @import dplyr
 #' @importFrom crosstalk SharedData
+#' @importFrom purrr map
 #' @importFrom reactable getReactableState renderReactable
 #' @import stringr
 #' @noRd
@@ -44,7 +45,10 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         mutate(PTC = as.character(color == "#FF0000")) %>%
         select(-color) %>%
         collect() %>%
-        mutate(position = position_from_gtf())
+        mutate(
+          position = position_from_gtf(.),
+          trackhub_url = purrr::map(position, \(x)  create_trackhub_url(position = x)) %>% unlist()
+        )
 
 
       anno <- tbl(conn, "anno") %>%
@@ -86,26 +90,50 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           PTC = colDef(
             name = "PTC",
             show = TRUE,
+            width = 60,
             align = "center",
+            vAlign = "center",
             cell = function(value) {
               if (value == "false") "\u274c" else "\u2714\ufe0f"
             }
           ),
           lr_support = colDef(
             name = "LRS",
+            width = 60,
             show = TRUE,
             align = "center",
+            vAlign = "center",
             cell = function(value) {
               if (value == "FALSE") "\u274c" else "\u2714\ufe0f"
             }
           ),
           transcript_id = colDef(
-            width = 180,
-            show = TRUE
+            width = 160,
+            show = TRUE,
+            vAlign = "center",
+          ),
+          trackhub_url = colDef(
+            name = 'TH',
+            width = 60,
+            show = TRUE,
+            align = "center",
+            vAlign = "center",
+            html = TRUE,
+            cell = JS("
+function(cellInfo) {
+  const url = cellInfo.row['trackhub_url'];
+
+  if (url === undefined) {
+    return '';
+  } else {
+    return `<a href='${url}' target='_blank'>URL</a>`;
+  }
+}")
           ),
           ref_transcript_name = colDef(
             name = "ref_transcript",
-            width = 180,
+            width = 160,
+            vAlign = "center",
             show = TRUE,
             html = TRUE,
             cell = JS("
@@ -125,9 +153,10 @@ function(cellInfo) {
 }")
           ),
           contrasts = colDef(
-            width = 180,
+            width = 160,
             show = TRUE,
             html = TRUE,
+            vAlign = "center",
             cell = JS("
     function(cellInfo) {
     const kd = cellInfo.row['Knockdown']
@@ -144,11 +173,13 @@ function(cellInfo) {
           padj = colDef(
             filterable = FALSE,
             show = TRUE,
+            width = 100,
             align = "right"
           ),
           log2fold = colDef(
             name = "l2fc",
             show = TRUE,
+            width = 80,
             format = colFormat(digits = 2),
             filterable = FALSE
           )
