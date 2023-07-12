@@ -43,9 +43,22 @@ mod_transcript_structure_ui <- function(id) {
 #' @noRd
 mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds) {
   moduleServer(id, function(input, output, session) {
+    gtf <- conn %>%
+      tbl("gtf") %>%
+      filter(gene_id == !!g_id) %>%
+      collect()
+
+    t_id <- intersect(gtf$transcript_id, t_id)
+
+    tx_counts <- tbl(conn, "tx_counts") %>%
+      filter(transcript_id %in% !!t_id) %>%
+      filter(contrasts %in% !!contrast) %>%
+      collect()
+
+
     output$gene_counts <- renderPlotly({
       conn %>%
-        tbl("gene_counts") %>%
+        tbl("dge") %>%
         filter(gene_id == !!g_id) %>%
         filter(contrasts %in% !!contrast) %>%
         collect() %>%
@@ -69,26 +82,22 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
     })
 
     output$trancript_proportions <- renderPlotly({
-      tbl(conn, "tx_counts") %>%
-        filter(transcript_id %in% !!t_id) %>%
-        filter(contrasts %in% !!contrast) %>%
-        left_join(tbl(conn, "anno"), by = c("gene_id", "transcript_id")) %>%
-        collect() %>%
-        plot_ly(
-          type = "box",
-          boxpoints = "all",
-          jitter = 1,
-          pointpos = 0,
-          y = ~ref_transcript_name,
-          x = ~usage,
-          color = ~group,
-          orientation = "h"
-        ) %>%
+      plot_ly(
+        tx_counts,
+        type = "box",
+        boxpoints = "all",
+        jitter = 1,
+        pointpos = 0,
+        y = ~transcript_id,
+        x = ~usage,
+        color = ~group,
+        orientation = "h"
+      ) %>%
         config(displayModeBar = FALSE) %>%
         layout(
           boxmode = "group",
-          hovermode = FALSE,
-          title = "Transcript usage per group",
+          hovermode = TRUE,
+          # title = "Transcript usage per group",
           xaxis = list(title = ""),
           yaxis = list(title = ""),
           legend = list(orientation = "h")
@@ -96,15 +105,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
     })
 
     output$gene_structure <- renderPlot({
-
-      # anno <- tbl(conn, 'anno') %>%
-      #   select(gene_id, transcript_id, ref_transcript_id)
-
-      gtf <- conn %>%
-        tbl("gtf") %>%
-        filter(gene_id == !!g_id) %>%
-        collect()
-
       transcript <- gtf %>%
         dplyr::filter(type == "transcript") %>%
         filter(cds_source %in% cds) %>%
@@ -115,6 +115,7 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
         dplyr::filter(type != "transcript") %>%
         left_join(transcript %>% select(cds_source, PTC, Name), by = "Name") %>%
         filter(!is.na(cds_source))
+      validate(need(nrow(gtf) > 0, "No CDS source to show."))
 
       exons <- gtf %>% dplyr::filter(type == "exon")
       cds <- gtf %>% dplyr::filter(type == "CDS")
