@@ -1,9 +1,3 @@
-transcript_view_grid <- create_grid(
-  rbind(c("top")),
-  c("auto"),
-  c("auto")
-)
-
 #' transcript view UI Function
 #'
 #' @description A shiny Module.
@@ -17,10 +11,8 @@ transcript_view_grid <- create_grid(
 mod_transcript_ui <- function(id) {
   ns <- NS(id)
 
-  grid(
-    transcript_view_grid,
-    top = reactableOutput(ns("table_transcript")) %>% shinycssloaders::withSpinner()
-  )
+  reactableOutput(ns("table_transcript")) %>%
+    shinycssloaders::withSpinner()
 }
 
 #' transcript view Server Functions
@@ -32,76 +24,136 @@ mod_transcript_ui <- function(id) {
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     output$table_transcript <- renderReactable({
-      dte <- conn %>%
-        tbl("dte") %>%
+      dte <- tbl(conn, "dte") %>%
         filter(
           transcript_id %in% !!tx,
           contrasts %in% !!contrast
         ) %>%
-        select(transcript_id, contrasts, padj, log2fold)
+        select(transcript_id, contrasts, padj, log2fold) %>%
+        collect() %>%
+        left_join(load_metadata(conn), by = "contrasts") %>%
+        select(-name)
 
-
-      gtf <- conn %>%
-        tbl("gtf") %>%
+      gtf <- tbl(conn, "gtf") %>%
         filter(
           transcript_id %in% !!tx,
           type == "transcript",
           cds_source %in% !!cds
         ) %>%
-        select(transcript_id, cds_source, lr_support, color, class_code) %>%
+        select(transcript_id, cds_source, lr_support, color, class_code, seqnames, start, end) %>%
         mutate(PTC = as.character(color == "#FF0000")) %>%
-        select(-color)
-
-      gtf %>%
-        left_join(dte, by = "transcript_id") %>%
+        select(-color) %>%
         collect() %>%
+        mutate(position = position_from_gtf())
+
+
+      anno <- tbl(conn, "anno") %>%
+        filter(transcript_id %in% !!tx) %>%
+        select(transcript_id, ref_transcript_name, ref_transcript_id) %>%
+        collect()
+
+      gtf <- gtf %>%
+        left_join(dte, by = "transcript_id", multiple = "first") %>%
+        left_join(anno, by = "transcript_id") %>%
+        collect() %>%
+        select(transcript_id, ref_transcript_name, class_code, everything()) %>%
         mutate(
           log2fold = round(log2fold, 2),
-          padj = padj %>% scales::scientific()
-        ) %>%
-        reactable(
-          .,
-          language = reactableLang(
-            filterPlaceholder = "Filter"
-          ),
-          filterable = TRUE,
-          striped = TRUE,
-          defaultSorted = c("padj"),
-          showPageSizeOptions = TRUE,
-          defaultPageSize = 10,
-          pageSizeOptions = c(5, 10, 25, 50),
-          highlight = TRUE,
-          wrap = FALSE,
-          theme = reactableTheme(
-            highlightColor = "#FFFFBF",
-            cellPadding = "8px 12px"
-          ),
-          defaultColDef = colDef(
-            sortNALast = TRUE
-          ),
-          columns =
-            list(
-              transcript_id = colDef(
-                width = 180
-              ),
-              contrasts = colDef(
-                width = 200
-              )
-            )
-          #   padj = colDef(
-          #     format = colFormat(digits = 2),
-          #     filterable = FALSE
-          #   ),
-          #   log2fold = colDef(
-          #     name = "log2fc",
-          #     format = colFormat(digits = 2),
-          #     filterable = FALSE
-          #   ),
-          #   contrasts = colDef(
-          #     width = 200
-          #   )
-          # )
+          padj = padj %>% scales::scientific(),
+          class_code = case_when(
+            class_code == "=" ~ "Intron chain match",
+            class_code == "n" ~ "Retained introns",
+            class_code %in% c("c", "j", "k") ~ "Splicing variants",
+            TRUE ~ "Other"
+          )
         )
+
+      reactable(
+        gtf,
+        highlight = TRUE,
+        wrap = FALSE,
+        theme = reactableTheme(
+          borderColor = "#dfe2e5",
+          stripedColor = "#f6f8fa",
+          highlightColor = "#FFFFBF",
+          cellPadding = "8px 12px"
+        ),
+        defaultColDef = colDef(
+          sortNALast = TRUE,
+          show = FALSE
+        ),
+        columns = list(
+          PTC = colDef(
+            name = "PTC",
+            show = TRUE,
+            align = "center",
+            cell = function(value) {
+              if (value == "false") "\u274c" else "\u2714\ufe0f"
+            }
+          ),
+          lr_support = colDef(
+            name = "LRS",
+            show = TRUE,
+            align = "center",
+            cell = function(value) {
+              if (value == "FALSE") "\u274c" else "\u2714\ufe0f"
+            }
+          ),
+          transcript_id = colDef(
+            width = 180,
+            show = TRUE
+          ),
+          ref_transcript_name = colDef(
+            name = "ref_transcript",
+            width = 180,
+            show = TRUE,
+            html = TRUE,
+            cell = JS("
+function(cellInfo) {
+  const cc = cellInfo.row['class_code'];
+  const ti = cellInfo.row['ref_transcript_id'];
+  const lab = '<div>' +
+    '<strong>' + cellInfo.value + '</strong> <br>' +
+    '<small><i>Match</i>: ' + cc + '</small></div>';
+
+  if (ti === undefined) {
+    return lab;
+  } else {
+    const url = 'http://www.ensembl.org/id/' + ti;
+    return `<a href='${url}' target='_blank'>${lab}</a>`;
+  }
+}")
+          ),
+          contrasts = colDef(
+            width = 180,
+            show = TRUE,
+            html = TRUE,
+            cell = JS("
+    function(cellInfo) {
+    const kd = cellInfo.row['Knockdown']
+    const cl = cellInfo.row['cellline']
+    const ko = cellInfo.row['Knockout'] || 'NoKO'
+        return (
+          '<div>' +
+          '<strong>' + kd + '</strong> <br>' +
+          '<small><i>Cell-line</i>: ' + cl +
+          ';<i> KO</i>: ' + ko + ' </small></div>'
+        )
+      }")
+          ),
+          padj = colDef(
+            filterable = FALSE,
+            show = TRUE,
+            align = "right"
+          ),
+          log2fold = colDef(
+            name = "l2fc",
+            show = TRUE,
+            format = colFormat(digits = 2),
+            filterable = FALSE
+          )
+        )
+      )
     })
   })
 }
