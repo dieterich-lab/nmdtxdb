@@ -6,3 +6,4 @@
 .Renviron
 passwords.txt
 R/other/
+*.tar.gz
