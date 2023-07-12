@@ -14,16 +14,7 @@ INITIAL_CONTRAST <- c(
 app_server <- function(input, output, session) {
   conn <- connect_db()
 
-  metadata <- conn %>%
-    tbl("metadata") %>%
-    select(contrasts, Knockdown, Knockout, cellline) %>%
-    filter(Knockdown != "LucKD") %>%
-    distinct() %>%
-    collect() %>%
-    mutate(
-      name = str_replace(contrasts, "-vs-.*", ""),
-      Knockout = str_replace(Knockout, "_", "")
-    )
+  metadata <- load_metadata(conn)
 
   gene_info <- reactiveVal()
 
