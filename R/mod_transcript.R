@@ -57,7 +57,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         collect()
 
       gtf <- gtf %>%
-        left_join(dte, by = "transcript_id", multiple = "first") %>%
+        left_join(dte, by = "transcript_id") %>%
+        distinct() %>%
         left_join(anno, by = "transcript_id") %>%
         collect() %>%
         select(transcript_id, ref_transcript_name, class_code, everything()) %>%
@@ -108,12 +109,13 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             }
           ),
           transcript_id = colDef(
+            name = "Transcript id",
             width = 160,
             show = TRUE,
             vAlign = "center",
           ),
           trackhub_url = colDef(
-            name = 'TH',
+            name = 'TrackHub',
             width = 60,
             show = TRUE,
             align = "center",
@@ -131,7 +133,7 @@ function(cellInfo) {
 }")
           ),
           ref_transcript_name = colDef(
-            name = "ref_transcript",
+            name = "Ref Transcript",
             width = 160,
             vAlign = "center",
             show = TRUE,
