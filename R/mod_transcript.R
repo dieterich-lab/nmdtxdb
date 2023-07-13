@@ -115,7 +115,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             vAlign = "center",
           ),
           trackhub_url = colDef(
-            name = 'TrackHub',
+            name = "TrackHub",
             width = 60,
             show = TRUE,
             align = "center",

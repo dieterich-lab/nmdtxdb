@@ -103,7 +103,6 @@ log10_or_max <- function(x) {
 #' @importFrom httr modify_url GET http_type http_error status_code accept content
 #' @importFrom jsonlite fromJSON
 get_gene_info <- function(gene_id) {
-
   url <- modify_url(
     url = "https://mygene.info",
     path = paste0("v3/gene/", gene_id),
@@ -256,13 +255,11 @@ plot_annotation <- function(gtf) {
 #' Creates a connection to the database
 #' @importFrom DBI dbConnect
 #' @importFrom RPostgres Postgres
-connect_db <- function(
-    dbname = "nmd_transcriptome_v1",
-    host = Sys.getenv("NMD_PGHOST"),
-    port = Sys.getenv("NMD_PGPORT"),
-    password = Sys.getenv("NMD_PGPASSWORD"),
-    user = Sys.getenv("NMD_PGUSER")
-    ) {
+connect_db <- function(dbname = "nmd_transcriptome_v1",
+                       host = Sys.getenv("NMD_PGHOST"),
+                       port = Sys.getenv("NMD_PGPORT"),
+                       password = Sys.getenv("NMD_PGPASSWORD"),
+                       user = Sys.getenv("NMD_PGUSER")) {
   dbConnect(
     Postgres(),
     dbname = dbname,
@@ -296,24 +293,20 @@ create_grid <- function(areas, cols_width, rows_height) {
 #' @return A character string representing the genomic position in the format "chr{seqnames}:{start}-{end}".
 #'
 #' @examples
-#' gtf <- data.frame(seqnames = c("chr1", "chr1", "chr2", "chr2"),
-#'                   start = c(100, 200, 300, 400),
-#'                   end = c(500, 600, 700, 800),
-#'                   gene_id = c("Gene1", "Gene2", "Gene3", "Gene4"))
+#' gtf <- data.frame(
+#'   seqnames = c("chr1", "chr1", "chr2", "chr2"),
+#'   start = c(100, 200, 300, 400),
+#'   end = c(500, 600, 700, 800),
+#'   gene_id = c("Gene1", "Gene2", "Gene3", "Gene4")
+#' )
 #' position_from_gtf(gtf, "gene_id")
 #'
 #' @importFrom dplyr group_by summarise first
 #' @importFrom stringr str_glue_data
 #'
-position_from_gtf <- function(gtf, col = 'gene_id') {
+position_from_gtf <- function(gtf) {
   gtf %>%
-    group_by(!!col) %>%
-    summarise(
-      seqnames = first(seqnames),
-      start = min(start,na.rm = TRUE),
-      end = max(end)
-    ) %>%
-    mutate(chr = ifelse(str_detect(seqnames, 'chr'), '', 'chr')) %>%
+    mutate(chr = ifelse(str_detect(seqnames, "chr"), "", "chr")) %>%
     str_glue_data("{chr}{seqnames}:{start}-{end}")
 }
 
@@ -332,15 +325,15 @@ position_from_gtf <- function(gtf, col = 'gene_id') {
 #' @examples
 #' create_trackhub_url()
 #' create_trackhub_url(db = "mm10", position = "chr1:1000-2000")
-#' create_trackhub_url(db = "mm10", position = "chr1:1000-2000", hub=NA)
+#' create_trackhub_url(db = "mm10", position = "chr1:1000-2000", hub = NA)
 #' @importFrom httr modify_url
 #'
-create_trackhub_url <- function(
-    base_url="http://genome-euro.ucsc.edu/", db="hg38", position=NA, hub="https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/nmd_transcriptome.hub.txt") {
+create_trackhub_url <- function(base_url = "http://genome-euro.ucsc.edu/", db = "hg38", position = NA, hub = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/nmd_transcriptome.hub.txt") {
   query <- list(
     db = db,
     position = position,
-    hubUrl = hub)
+    hubUrl = hub
+  )
 
   modify_url(
     url = base_url,
@@ -360,6 +353,4 @@ load_metadata <- function(conn) {
       name = str_replace(contrasts, "-vs-.*", ""),
       Knockout = str_replace(Knockout, "_", "")
     )
-
-
 }
