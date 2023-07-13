@@ -21,7 +21,7 @@ fc_boxplot <- function(data, index, gene_l2fc, xlims) {
   data <- data[index, ]
   gene_name <- data[[1, "gene_name"]]
   contrast <- data[[1, "contrasts"]]
-  data <- mutate(data, y = 1, label = sprintf("↓ %s", gene_name))
+  data <- mutate(data, y = 1, label = gene_name)
 
   gene_l2fc <- gene_l2fc %>% filter(contrasts == !!contrast)
   text_color <- ifelse(data$log2FoldChange > 0, "red", "blue")
@@ -36,8 +36,9 @@ fc_boxplot <- function(data, index, gene_l2fc, xlims) {
       colour = text_color,
       size = 3.5
     ) +
+    geom_vline(data=data, colour = text_color, aes(xintercept=log2FoldChange)) +
     lims(x = xlims) +
-    labs(x = "", y = "") +
+    labs(y = "") +
     theme_minimal() +
     theme(
       axis.text.y = element_blank()
