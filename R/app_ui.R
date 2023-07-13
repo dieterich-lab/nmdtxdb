@@ -14,7 +14,10 @@ app_ui <- function(request) {
     semanticPage(
       sidebar_layout(
         sidebar_panel(
-          width = 3,
+          width = 2,
+          img(
+            src = "www/nmdtxdb_logo.png",
+            style = "width: 100%;"),
           selectizeInput(
             inputId = "gene_select",
             label = h3("Pick a gene:"),
@@ -51,24 +54,21 @@ app_ui <- function(request) {
               onclick = "window.open(
               'https://forms.gle/ZnaCwzNpFDPUHeh27',
               '_blank')",
-             icon = icon("comments"),
-             label = "Feedback",
-             style="width: 100%; padding: 0; height: 40px"
+              icon = icon("comments"),
+              label = "Feedback",
+              style = "width: 100%; padding: 0; height: 40px"
             )
           ),
           br(),
           div(
             action_button(
               input_id = "action_button_tutorial",
-              # onclick = "window.open(
-              # 'https://forms.gle/ZnaCwzNpFDPUHeh27',
-              # '_blank')",
-             icon = icon("question"),
+              onclick = "alert('Not implemented');",
+              icon = icon("question"),
               label = "Tutorial",
-             style="width: 100%; padding: 0; height: 40px"
+              style = "width: 100%; padding: 0; height: 40px"
             )
           ),
-
         ),
         main_panel(
           width = 10,
@@ -122,6 +122,6 @@ golem_add_external_resources <- function() {
     bundle_resources(
       path = app_sys("app/www"),
       app_title = "nmdtx"
-    )
+    ),
   )
 }
