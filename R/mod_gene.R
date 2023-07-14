@@ -36,7 +36,7 @@ fc_boxplot <- function(data, index, gene_l2fc, xlims) {
       colour = text_color,
       size = 3.5
     ) +
-    geom_vline(data=data, colour = text_color, aes(xintercept=log2FoldChange)) +
+    geom_vline(data = data, colour = text_color, aes(xintercept = log2FoldChange)) +
     lims(x = xlims) +
     labs(y = "") +
     theme_minimal() +
@@ -135,6 +135,9 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
             width = 180,
             show = TRUE,
             html = TRUE,
+            header = with_tooltip(
+              "contrasts", "DGE comparison in the format treatment vs control."
+            ),
             cell = JS("
     function(cellInfo) {
     const kd = cellInfo.row['Knockdown']
@@ -151,13 +154,18 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
           padj = colDef(
             filterable = FALSE,
             show = TRUE,
-            align = "right"
+            align = "right",
+            header = with_tooltip(
+              "padj", "DGE adjusted p-value."
+            )
           ),
           log2FoldChange = colDef(
-            name = "log2fc",
             show = TRUE,
             format = colFormat(digits = 2),
-            filterable = FALSE
+            filterable = FALSE,
+            header = with_tooltip(
+              "log2fc", "DGE log2FoldChange."
+            )
           )
         ),
         defaultColDef = colDef(

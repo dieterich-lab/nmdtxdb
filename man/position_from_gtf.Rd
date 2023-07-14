@@ -4,7 +4,7 @@
 \alias{position_from_gtf}
 \title{Extract Genomic Position from GTF}
 \usage{
-position_from_gtf(gtf, col = "gene_id")
+position_from_gtf(gtf)
 }
 \arguments{
 \item{gtf}{A data frame containing the GTF data.}
@@ -18,10 +18,12 @@ A character string representing the genomic position in the format "chr{seqnames
 This function extracts the genomic position from a GTF file by grouping the data based on a specified column and summarizing the sequence name, start, and end coordinates.
 }
 \examples{
-gtf <- data.frame(seqnames = c("chr1", "chr1", "chr2", "chr2"),
-                  start = c(100, 200, 300, 400),
-                  end = c(500, 600, 700, 800),
-                  gene_id = c("Gene1", "Gene2", "Gene3", "Gene4"))
+gtf <- data.frame(
+  seqnames = c("chr1", "chr1", "chr2", "chr2"),
+  start = c(100, 200, 300, 400),
+  end = c(500, 600, 700, 800),
+  gene_id = c("Gene1", "Gene2", "Gene3", "Gene4")
+)
 position_from_gtf(gtf, "gene_id")
 
 }

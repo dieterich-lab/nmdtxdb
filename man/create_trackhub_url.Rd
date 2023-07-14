@@ -30,5 +30,5 @@ This function generates a URL for accessing a track hub on the UCSC Genome Brows
 \examples{
 create_trackhub_url()
 create_trackhub_url(db = "mm10", position = "chr1:1000-2000")
-create_trackhub_url(db = "mm10", position = "chr1:1000-2000", hub=NA)
+create_trackhub_url(db = "mm10", position = "chr1:1000-2000", hub = NA)
 }

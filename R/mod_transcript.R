@@ -89,7 +89,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         ),
         columns = list(
           PTC = colDef(
-            name = "PTC",
+            header = with_tooltip(
+              "PTC", "\u2713 if the transcript has a PTC else \u274c."),
             show = TRUE,
             width = 60,
             align = "center",
@@ -99,7 +100,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             }
           ),
           lr_support = colDef(
-            name = "LRS",
+            header = with_tooltip(
+              "LRS", "\u2713 if the transcript has long read support else \u274c."),
             width = 60,
             show = TRUE,
             align = "center",
@@ -109,13 +111,15 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             }
           ),
           transcript_id = colDef(
-            name = "Transcript id",
+            header = with_tooltip(
+              "transcript_id", "Internal assembly identifier."),
             width = 160,
             show = TRUE,
             vAlign = "center",
           ),
           trackhub_url = colDef(
-            name = "TrackHub",
+            header = with_tooltip(
+              "trackhub_url", "Link to the UCSC Genome Browser Trackhub."),
             width = 60,
             show = TRUE,
             align = "center",
@@ -133,7 +137,8 @@ function(cellInfo) {
 }")
           ),
           ref_transcript_name = colDef(
-            name = "Ref Transcript",
+            header = with_tooltip(
+              "ref_transcript", "Ensembl transcript name followed by type of match between reference and assembly."),
             width = 160,
             vAlign = "center",
             show = TRUE,
@@ -154,6 +159,9 @@ function(cellInfo) {
 }")
           ),
           contrasts = colDef(
+            header = with_tooltip(
+              "contrasts", "DTE comparison in the format treatment vs control."
+            ),
             width = 160,
             show = TRUE,
             html = TRUE,
@@ -172,13 +180,16 @@ function(cellInfo) {
       }")
           ),
           padj = colDef(
+            header = with_tooltip(
+              "padj", "DTE adjusted p-value."),
             filterable = FALSE,
             show = TRUE,
             width = 100,
             align = "right"
           ),
           log2fold = colDef(
-            name = "l2fc",
+            header = with_tooltip(
+              "log2fc", "DTE log2FoldChange."),
             show = TRUE,
             width = 80,
             format = colFormat(digits = 2),
