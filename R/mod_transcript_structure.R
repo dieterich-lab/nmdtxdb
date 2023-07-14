@@ -48,60 +48,63 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds)
       filter(gene_id == !!g_id) %>%
       collect()
 
-    t_id <- intersect(gtf$transcript_id, t_id)
-
-    tx_counts <- tbl(conn, "tx_counts") %>%
-      filter(transcript_id %in% !!t_id) %>%
-      filter(contrasts %in% !!contrast) %>%
-      collect()
-
+    metadata <- load_metadata(conn)
+    metadata <- metadata %>%
+      mutate(labels = str_glue_data(.,
+        '<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}'
+      ))
+    meta_labeller <- setNames(as.character(metadata$labels), metadata$contrasts)
 
     output$gene_counts <- renderPlotly({
-      conn %>%
+
+      data <- conn %>%
         tbl("dge") %>%
-        filter(gene_id == !!g_id) %>%
         filter(contrasts %in% !!contrast) %>%
-        collect() %>%
-        plot_ly(
-          type = "box",
-          x = ~group,
-          y = ~ log10_or_max(value),
-          color = ~ factor(group)
+        mutate(
+          logpadj = -log10(padj + 1e-10)
         ) %>%
-        config(displayModeBar = FALSE) %>%
-        layout(
-          title = "Gene expression",
-          hovermode = FALSE,
-          xaxis = list(
-            title = "",
-            showticklabels = FALSE
-          ),
-          yaxis = list(title = "log10(counts)", rangemode = "tozero"),
-          legend = list(orientation = "h")
-        )
+        collect()
+
+      p <- data %>%
+        ggplot(aes(x = log2FoldChange, y = logpadj, label = gene_name)) +
+        geom_point(color = 'gray', alpha= .20) +
+        geom_point(data=data %>% filter(gene_id == !!g_id), color='red') +
+        theme_minimal() +
+        facet_grid(
+          . ~ contrasts,
+          labeller =  labeller(contrasts=meta_labeller))
+
+      p %>%
+        ggplotly() %>%
+        config(displaylogo = FALSE) %>%
+        layout(dragmode = "select", hovermode = "x") %>%
+        toWebGL()
+
     })
 
     output$trancript_proportions <- renderPlotly({
-      plot_ly(
-        tx_counts,
-        type = "box",
-        boxpoints = "all",
-        jitter = 1,
-        pointpos = 0,
-        y = ~transcript_id,
-        x = ~usage,
-        color = ~group,
-        orientation = "h"
-      ) %>%
-        config(displayModeBar = FALSE) %>%
-        layout(
-          boxmode = "group",
-          hovermode = TRUE,
-          # title = "Transcript usage per group",
-          xaxis = list(title = ""),
-          yaxis = list(title = ""),
-          legend = list(orientation = "h")
-        )
+      data <- conn %>%
+        tbl("dte") %>%
+        filter(contrasts %in% !!contrast) %>%
+        mutate(
+          logpadj = -log10(padj + 1e-10)
+        ) %>%
+        collect()
+
+      p <- data %>%
+        ggplot(aes(x = log2fold, y = logpadj, label = gene_id)) +
+        geom_point(color = 'gray', alpha= .20) +
+        geom_point(data=data %>% filter(gene_id == !!g_id), color='red') +
+        facet_grid(
+          . ~ contrasts,
+          labeller =  labeller(contrasts=meta_labeller)) +
+        theme_minimal()
+
+      p %>%
+        ggplotly() %>%
+        config(displaylogo = FALSE) %>%
+        toWebGL()
+
     })
 
     output$gene_structure <- renderPlot({
