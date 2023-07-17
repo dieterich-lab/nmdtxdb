@@ -15,13 +15,19 @@ app_server <- function(input, output, session) {
   conn <- connect_db()
 
   metadata <- load_metadata(conn)
+  cds_source_choices = data.frame(
+    cds_source = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
+    cds_source2 = c("Ensembl", "Gao et al., 2015", "OpenProt", "Zhang et al., 2017", "TransDecoder")
+  )
+
+  gene_feat <- tbl(conn, 'gene_feat') %>% collect()
 
   gene_info <- reactiveVal()
 
   updateSelectizeInput(
     session,
     "gene_select",
-    choices = tbl(conn, "anno") %>% pull("ref_gene_name") %>% unique() %>% sort(),
+    choices = gene_feat %>% filter(any_dge) %>% pull('ref_gene_name'),
     server = TRUE,
     selected = "SRSF1"
   )
@@ -49,21 +55,22 @@ app_server <- function(input, output, session) {
     selected = INITIAL_CONTRAST,
   )
 
-  cds_source_choices = data.frame(
-    value = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
-    label = c("Ensembl", "Gao et al., 2015", "OpenProt", "ribotish", "TransDecoder")
-  )
+  observeEvent(input$gene_select, {
+    cds_choices <- gene_feat %>%
+      filter(ref_gene_name == input$gene_select) %>%
+      select(cds_source) %>%
+      separate_rows(., cds_source, sep = ';') %>%
+      left_join(cds_source_choices, by='cds_source') %>%
+      rename(label = cds_source2)
 
-  updateSelectizeInput(
-    session,
-    "cds_source_select",
-    choices = cds_source_choices,
-    options = list(
-      valueField = "value",
-      labelField = "label"),
-    server = TRUE,
-    selected = "ensembl",
-  )
+    updateSelectizeInput(
+      session,
+      "cds_source_select",
+      choices = cds_choices$cds_source,
+      server = TRUE,
+      selected = 'ensembl'
+    )
+  })
 
   send_toast(
     msg = "Server is ready. Choose a gene on the sidebar.", class = "success", session = session
@@ -107,7 +114,7 @@ app_server <- function(input, output, session) {
         "mod_transcript1", conn, transcript_id, contrast(), cds_source()
       )
     }
-  ) %>% debounce(1000)
+  )
 
   output$gene_info <- renderUI({
     validate(need(input$gene_select, "Waiting selection"))
