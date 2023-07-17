@@ -354,3 +354,8 @@ load_metadata <- function(conn) {
       Knockout = str_replace(Knockout, "_", "")
     )
 }
+
+with_tooltip <- function(value, tooltip) {
+  tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+            title = tooltip, value)
+}
