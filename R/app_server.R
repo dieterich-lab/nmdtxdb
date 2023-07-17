@@ -66,7 +66,10 @@ app_server <- function(input, output, session) {
     updateSelectizeInput(
       session,
       "cds_source_select",
-      choices = cds_choices$cds_source,
+      choices = cds_choices,
+      options = list(
+        valueField = "cds_source",
+        labelField = "label"),
       server = TRUE,
       selected = 'ensembl'
     )
