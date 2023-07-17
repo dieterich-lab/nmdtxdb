@@ -212,5 +212,9 @@ populate_db <- function() {
     )
   )
 
+
+
   dbDisconnect(conn)
+
+
 }
