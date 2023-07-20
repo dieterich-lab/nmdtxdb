@@ -12,15 +12,21 @@ INITIAL_CONTRAST <- c(
 #' @import dplyr
 #' @noRd
 app_server <- function(input, output, session) {
+
+  mod_intro_server("intro_1")
+
   conn <- connect_db()
 
-  metadata <- load_metadata(conn)
+  metadata <- load_metadata(conn) %>%
+    mutate(label = str_c(Knockdown, Knockout, sep='_'))
+
   cds_source_choices = data.frame(
     cds_source = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
     cds_source2 = c("Ensembl", "Gao et al., 2015", "OpenProt", "Zhang et al., 2017", "TransDecoder")
   )
 
   gene_feat <- tbl(conn, 'gene_feat') %>% collect()
+
 
   gene_info <- reactiveVal()
 
@@ -38,7 +44,7 @@ app_server <- function(input, output, session) {
     choices = metadata,
     options = list(
       valueField = "contrasts",
-      labelField = "Knockdown",
+      labelField = "label",
       render = I("{
         option: function(item, escape) {
           return '<div>'
@@ -75,6 +81,11 @@ app_server <- function(input, output, session) {
     )
   })
 
+  output$gene_info <- renderUI({
+    validate(need(input$gene_select, "Waiting selection"))
+    req(gene_info())
+  })
+
   send_toast(
     msg = "Server is ready. Choose a gene on the sidebar.", class = "success", session = session
   )
@@ -99,28 +110,23 @@ app_server <- function(input, output, session) {
     c(anno(), contrast(), cds_source()),
     ignoreNULL = TRUE,
     {
-      mod_intro_server("intro_1")
       gene_id <- anno()[[1, "gene_id"]]
       ref_gene_id <- anno()[[1, "ref_gene_id"]]
       gene_name <- anno()[[1, "ref_gene_name"]]
       transcript_id <- anno()[["transcript_id"]]
-      transcript_name <- anno()[["ref_transcript_name"]]
       gene_info(render_gene_card(ref_gene_id, conn))
+
       mod_gene_server(
         "mod_gene1", conn, gene_name, contrast()
       )
       mod_transcript_structure_server(
         "mod_transcript_structure", conn, gene_id, transcript_id, contrast(),
-        cds_source()
+        cds_source(), metadata
       )
       mod_transcript_server(
-        "mod_transcript1", conn, transcript_id, contrast(), cds_source()
-      )
+        "mod_transcript1", conn, transcript_id, contrast(), cds_source())
     }
   )
 
-  output$gene_info <- renderUI({
-    validate(need(input$gene_select, "Waiting selection"))
-    req(gene_info())
-  })
+
 }
