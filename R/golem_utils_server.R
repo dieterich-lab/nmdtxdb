@@ -352,10 +352,19 @@ load_metadata <- function(conn) {
     mutate(
       name = str_replace(contrasts, "-vs-.*", ""),
       Knockout = str_replace(Knockout, "_", "")
+    ) %>%
+    mutate(
+      contrast_label = str_glue_data(
+        .,
+        "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}"
+      ),
+      label = str_c(Knockdown, Knockout, sep = "_")
     )
 }
 
 with_tooltip <- function(value, tooltip) {
-  tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
-            title = tooltip, value)
+  tags$abbr(
+    style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+    title = tooltip, value
+  )
 }

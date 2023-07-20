@@ -17,8 +17,7 @@ app_server <- function(input, output, session) {
 
   conn <- connect_db()
 
-  metadata <- load_metadata(conn) %>%
-    mutate(label = str_c(Knockdown, Knockout, sep='_'))
+  metadata <- load_metadata(conn)
 
   cds_source_choices = data.frame(
     cds_source = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
