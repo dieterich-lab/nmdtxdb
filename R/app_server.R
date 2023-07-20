@@ -119,10 +119,10 @@ app_server <- function(input, output, session) {
       mod_gene_server(
         "mod_gene1", conn, gene_name, contrast()
       )
-      mod_transcript_structure_server(
-        "mod_transcript_structure", conn, gene_id, transcript_id, contrast(),
-        cds_source(), metadata
-      )
+      # mod_transcript_structure_server(
+      #   "mod_transcript_structure", conn, gene_id, transcript_id, contrast(),
+      #   cds_source(), metadata
+      # )
       mod_transcript_server(
         "mod_transcript1", conn, transcript_id, contrast(), cds_source())
     }
