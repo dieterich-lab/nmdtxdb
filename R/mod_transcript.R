@@ -163,13 +163,20 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         wrap = FALSE,
         details = function(index) {
           if (!is.na(df[[index, "cds_source"]])) {
-            p <- transcript_plot(
-              not_transcrips %>% filter(
-                transcript_id == df[[index, "transcript_id"]],
-                cds_source == df[[index, "cds_source"]]
+            data <- df[index, ]
+            text_color <- ifelse(data$log2fold > 0, "red", "blue")
+
+            p <- l2fc %>%
+              filter(!is.na(log2fold), contrasts == data[['contrasts']]) %>%
+              ggplot(aes(y = contrasts, x = log2fold)) +
+              geom_boxplot() +
+              geom_vline(data = data, colour = text_color, aes(xintercept = log2fold)) +
+              labs(y = "") +
+              theme_minimal() +
+              theme(
+                axis.text.y = element_blank()
               )
-            )
-            htmltools::plotTag(p  + p + plot_layout(ncol=2), alt = "plots")
+            htmltools::plotTag(p, alt = "plots")
           }
         },
         theme = reactableTheme(
