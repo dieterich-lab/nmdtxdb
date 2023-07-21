@@ -52,12 +52,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds,
       "<extra></extra>"
     )
 
-    # gtf <- conn %>%
-    #   tbl("gtf") %>%
-    #   collect()
-    #
-    # gtf_gene_id <- gtf$gene_id %>% unique()
-    # gtf_transcript_id <- gtf$transcript_id %>% unique()
     data_dge <- tbl(conn, "dge") %>%
       select(-c(baseMean, lfcSE, stat, pvalue, gene_name)) %>%
       filter(
@@ -90,9 +84,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds,
         filter(target) %>%
         mutate(i = n())
 
-      r <- 2
-      theta <- 2 * pi / nrow(x_subset)
-
       plot_ly(
         x,
         x = ~log2FoldChange,
@@ -114,12 +105,6 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds,
           showarrow = TRUE,
           arrowcolor = toRGB("red"),
           arrowhead = 3,
-          # ax=r*sin(~i*theta),
-          # ay=r*cos(~i*theta),
-          # axref="x",
-          # ayref="y",
-          # xanchor="center",
-          # yanchor="bottom",
           font = list(size = 14, color = toRGB("red"))
         ) %>%
         add_annotations(
