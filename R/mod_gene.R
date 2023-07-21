@@ -101,7 +101,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
       dge <- dge() %>%
         filter(gene_name == !!gene_name) %>%
         mutate(padj = padj %>% scales::scientific()) %>%
-        left_join(load_metadata(conn), by = "contrasts") %>%
+        left_join(load_metadata(conn) %>% select(-contrast_label), by = "contrasts") %>%
         select(contrasts, padj, log2FoldChange, everything())
 
       reactable(
@@ -129,6 +129,9 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
             show = FALSE
           ),
           name = colDef(
+            show = FALSE
+          ),
+          label = colDef(
             show = FALSE
           ),
           contrasts = colDef(
