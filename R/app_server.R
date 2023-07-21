@@ -65,8 +65,12 @@ app_server <- function(input, output, session) {
       select(cds_source) %>%
       separate_rows(., cds_source, sep = ";") %>%
       left_join(cds_source_choices, by = "cds_source") %>%
-      rename(label = cds_source2)
-
+      rename(label = cds_source2) %>%
+      mutate(
+        cds_source = as.factor(cds_source),
+        levels(cds_source_choices$cds_source)) %>%
+      arrange(cds_source) %>%
+      mutate(cds_source = as.character(cds_source))
 
     updateSelectizeInput(
       session,
