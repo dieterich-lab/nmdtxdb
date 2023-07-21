@@ -25,7 +25,6 @@ app_server <- function(input, output, session) {
 
   gene_feat <- tbl(conn, "gene_feat") %>% collect()
 
-
   gene_info <- reactiveVal()
 
   updateSelectizeInput(
@@ -98,7 +97,7 @@ app_server <- function(input, output, session) {
     validate(need(input$gene_select, "Waiting selection"))
     send_toast(msg = "Loading selection.", class = "warning", session = session)
     tbl(conn, "anno") %>%
-      dplyr::filter(gene_name == !!input$gene_select) %>%
+      dplyr::filter(ref_gene_name == !!input$gene_select) %>%
       collect()
   })
 

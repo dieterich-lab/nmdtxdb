@@ -17,7 +17,9 @@ mod_transcript_ui <- function(id) {
 
 
 transcript_plot <- function(gtf) {
-  if (nrow(gtf) < 1){ return("No CDS source to show.") }
+  if (nrow(gtf) < 1) {
+    return("No CDS source to show.")
+  }
 
   exons <- gtf %>% dplyr::filter(type == "exon")
   cds <- gtf %>% dplyr::filter(type == "CDS")
@@ -48,7 +50,7 @@ transcript_plot <- function(gtf) {
     ) +
     scale_fill_manual(values = feat_colors) +
     theme_minimal()
-    labs(y = "") +
+  labs(y = "") +
     theme(
       axis.ticks = element_blank(),
       axis.text.x = element_blank(),
@@ -56,7 +58,6 @@ transcript_plot <- function(gtf) {
     )
 
   htmltools::plotTag(p1, alt = "plots")
-
 }
 
 #' transcript view Server Functions
@@ -69,7 +70,6 @@ transcript_plot <- function(gtf) {
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     output$table_transcript <- renderReactable({
-
       dte <- tbl(conn, "dte") %>%
         filter(
           transcript_id %in% !!tx,
@@ -86,8 +86,10 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
 
       anno <- tbl(conn, "anno") %>%
         filter(transcript_id %in% !!tx) %>%
-        select(ref_gene_name, transcript_id, ref_transcript_name,
-               ref_transcript_id, lr_support, class_code) %>%
+        select(
+          ref_gene_name, transcript_id, ref_transcript_name,
+          ref_transcript_id, lr_support, class_code
+        ) %>%
         collect()
 
       transcripts <- tbl(conn, "gtf") %>%
@@ -99,7 +101,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           position = position_from_gtf(.),
           trackhub_url = purrr::map(
             position,
-            \(x)  create_trackhub_url(position = x)) %>% unlist()
+            \(x)  create_trackhub_url(position = x)
+          ) %>% unlist()
         )
 
       not_transcrips <- tbl(conn, "gtf") %>%
@@ -108,15 +111,14 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         left_join(
           x = transcripts %>% select(Name, cds_source, PTC),
           y = select(., !c(cds_source)),
-          by = "Name", multiple = "all")
+          by = "Name", multiple = "all"
+        )
 
 
       df <- anno %>%
         left_join(dte, by = "transcript_id", multiple = "all") %>%
-        distinct() %>%
         left_join(transcripts, by = "transcript_id", multiple = "all") %>%
         select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
-        distinct() %>%
         mutate(
           log2fold = round(log2fold, 2),
           padj = padj %>% scales::scientific(),
@@ -126,17 +128,24 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             class_code %in% c("c", "j", "k") ~ "Splicing variants",
             TRUE ~ "Other"
           )
-        )
+        )  %>%
+        select(-c(seqnames, start, Name, end, color)) %>%
+        distinct()
 
       reactable(
-        df %>% select(
-          -c(seqnames, start, Name, end, color)),
+        df,
         highlight = TRUE,
         wrap = FALSE,
-        details = function(index) transcript_plot(
-          not_transcrips %>% filter(
-            transcript_id == df[[index, 'transcript_id']],
-            cds_source == df[[index, 'cds_source']])),
+        details = function(index) {
+          if (!is.na(df[[index, "cds_source"]])) {
+            transcript_plot(
+              not_transcrips %>% filter(
+                transcript_id == df[[index, "transcript_id"]],
+                cds_source == df[[index, "cds_source"]]
+              )
+            )
+          }
+        },
         theme = reactableTheme(
           borderColor = "#dfe2e5",
           stripedColor = "#f6f8fa",
