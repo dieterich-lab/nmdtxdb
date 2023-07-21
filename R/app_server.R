@@ -67,6 +67,7 @@ app_server <- function(input, output, session) {
       left_join(cds_source_choices, by = "cds_source") %>%
       rename(label = cds_source2)
 
+
     updateSelectizeInput(
       session,
       "cds_source_select",
@@ -76,7 +77,7 @@ app_server <- function(input, output, session) {
         labelField = "label"
       ),
       server = TRUE,
-      selected = cds_choices[[1, "cds_source"]]
+      selected = ifelse(nrow(cds_choices) > 0, cds_choices[[1, 1]], FALSE)
     )
   })
 
