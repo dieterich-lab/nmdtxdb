@@ -368,3 +368,52 @@ with_tooltip <- function(value, tooltip) {
     title = tooltip, value
   )
 }
+
+
+#' Plot Boxplot with Gene Highlight
+#'
+#' This function generates a boxplot with a highlighted gene based on the specified contrast.
+#'
+#' @param data A data frame containing the necessary columns: gene_name, contrasts, log2FoldChange.
+#' @param gene_name The name of the gene to highlight.
+#' @param xlims minimum, maximum values for x-axis
+#'
+#'
+#' @return A ggplot object displaying the boxplot with the highlighted gene.
+#'
+#' @examples
+# data <- data.frame(gene_name = c("Gene1", "Gene2", "Gene2"),
+#                    contrasts = c("Contrast1", "Contrast2", "Contrast2"),
+#                    log2FoldChange = c(1.5, -0.8, 2.2))
+# fc_boxplot(data, "Gene2", "Contrast2")
+#'
+#' @import dplyr
+#' @import ggplot2
+fc_boxplot <- function(data, index, gene_l2fc, xlims) {
+  data <- data[index, ]
+  gene_name <- data[[1, "gene_name"]]
+  contrast <- data[[1, "contrasts"]]
+  data <- mutate(data, y = 1, label = gene_name)
+
+  gene_l2fc <- gene_l2fc %>% filter(contrasts == !!contrast)
+  text_color <- ifelse(data$log2FoldChange > 0, "red", "blue")
+  p <- gene_l2fc %>%
+    ggplot(aes(y = contrasts, x = log2FoldChange)) +
+    geom_boxplot() +
+    geom_text(
+      data = data,
+      aes(label = label, y = y),
+      position = position_nudge(y = 0.08),
+      hjust = 0,
+      colour = text_color,
+      size = 3.5
+    ) +
+    geom_vline(data = data, colour = text_color, aes(xintercept = log2FoldChange)) +
+    lims(x = xlims) +
+    labs(y = "") +
+    theme_minimal() +
+    theme(
+      axis.text.y = element_blank()
+    )
+  return(p)
+}

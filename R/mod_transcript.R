@@ -1,3 +1,14 @@
+grid <- create_grid(
+  rbind(
+    c("top"),
+    c("bottom_left")
+  ),
+  c("100%", "100%"),
+  c("70%", "30%")
+)
+
+
+
 #' transcript view UI Function
 #'
 #' @description A shiny Module.
@@ -8,11 +19,17 @@
 #'
 #' @importFrom shiny NS
 #' @importFrom reactable reactableOutput
+#' @importFrom patchwork plot_layout
 mod_transcript_ui <- function(id) {
   ns <- NS(id)
 
-  reactableOutput(ns("table_transcript")) %>%
-    shinycssloaders::withSpinner()
+  grid(
+    grid,
+    top = reactableOutput(ns("table_transcript")) %>%
+      shinycssloaders::withSpinner(),
+    bottom_left = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner(),
+    bottom_right = NULL
+  )
 }
 
 
@@ -26,7 +43,7 @@ transcript_plot <- function(gtf) {
   introns <- to_intron(exons, group_var = "Name")
   feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
 
-  p1 <- exons %>%
+  p <- exons %>%
     ggplot(aes(
       xstart = start,
       xend = end,
@@ -56,8 +73,7 @@ transcript_plot <- function(gtf) {
       axis.text.x = element_blank(),
       legend.position = "top"
     )
-
-  htmltools::plotTag(p1, alt = "plots")
+  return(p)
 }
 
 #' transcript view Server Functions
@@ -69,6 +85,29 @@ transcript_plot <- function(gtf) {
 #' @noRd
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
+
+    transcripts <- tbl(conn, "gtf") %>%
+      filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
+      select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
+      collect() %>%
+      mutate(
+        PTC = color == "#FF0000",
+        position = position_from_gtf(.),
+        trackhub_url = purrr::map(
+          position,
+          \(x)  create_trackhub_url(position = x)
+        ) %>% unlist()
+      )
+
+    not_transcrips <- tbl(conn, "gtf") %>%
+      filter(transcript_id %in% !!tx, type != "transcript") %>%
+      collect() %>%
+      left_join(
+        x = transcripts %>% select(Name, cds_source, PTC),
+        y = select(., !c(cds_source)),
+        by = "Name", multiple = "all"
+      )
+
     output$table_transcript <- renderReactable({
       dte <- tbl(conn, "dte") %>%
         filter(
@@ -92,32 +131,18 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         ) %>%
         collect()
 
-      transcripts <- tbl(conn, "gtf") %>%
-        filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
-        select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
-        collect() %>%
-        mutate(
-          PTC = color == "#FF0000",
-          position = position_from_gtf(.),
-          trackhub_url = purrr::map(
-            position,
-            \(x)  create_trackhub_url(position = x)
-          ) %>% unlist()
-        )
-
-      not_transcrips <- tbl(conn, "gtf") %>%
-        filter(transcript_id %in% !!tx, type != "transcript") %>%
-        collect() %>%
-        left_join(
-          x = transcripts %>% select(Name, cds_source, PTC),
-          y = select(., !c(cds_source)),
-          by = "Name", multiple = "all"
-        )
-
+      cds_position <- not_transcrips %>%
+        filter(type == "CDS") %>%
+        group_by(transcript_id, cds_id) %>%
+        summarise(seqnames = first(seqnames), start = min(start), end =max(end)) %>%
+        ungroup() %>%
+        mutate(cds_position = position_from_gtf(.)) %>%
+        select(transcript_id, cds_id, cds_position)
 
       df <- anno %>%
         left_join(dte, by = "transcript_id", multiple = "all") %>%
         left_join(transcripts, by = "transcript_id", multiple = "all") %>%
+        left_join(cds_position, by = "transcript_id", multiple = "all") %>%
         select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
         mutate(
           log2fold = round(log2fold, 2),
@@ -138,12 +163,13 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         wrap = FALSE,
         details = function(index) {
           if (!is.na(df[[index, "cds_source"]])) {
-            transcript_plot(
+            p <- transcript_plot(
               not_transcrips %>% filter(
                 transcript_id == df[[index, "transcript_id"]],
                 cds_source == df[[index, "cds_source"]]
               )
             )
+            htmltools::plotTag(p  + p + plot_layout(ncol=2), alt = "plots")
           }
         },
         theme = reactableTheme(
@@ -179,6 +205,13 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             cell = function(value) {
               if_else(value == "FALSE", "\u274c", "\u2713", missing = "")
             }
+          ),
+          cds_position = colDef(
+            # header = with_tooltip(
+            #   "LRS", "\u2713 if the transcript has long read support else \u274c."
+            # ),
+            width = 200,
+            show = TRUE
           ),
           transcript_id = colDef(
             header = with_tooltip(
@@ -302,6 +335,9 @@ function(cellInfo) {
           )
         )
       )
+    })
+    output$gene_structure <- renderPlot({
+      transcript_plot(not_transcrips)
     })
   })
 }
