@@ -85,7 +85,7 @@ app_ui <- function(request) {
                 id = "gene_view_tab"
               ),
               list(
-                menu = "Transcript table",
+                menu = "Advanced view",
                 content = mod_transcript_ui("mod_transcript1"),
                 id = "transcript_view_tab"
               )
