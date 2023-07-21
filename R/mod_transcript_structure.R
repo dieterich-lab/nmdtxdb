@@ -41,79 +41,172 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds) {
+mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds, metadata) {
   moduleServer(id, function(input, output, session) {
-    gtf <- conn %>%
-      tbl("gtf") %>%
-      filter(gene_id == !!g_id) %>%
-      collect()
+    anno <- tbl(conn, "anno") %>% collect()
 
-    metadata <- load_metadata(conn)
-    metadata <- metadata %>%
-      mutate(labels = str_glue_data(.,
-        '<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}'
-      ))
-    meta_labeller <- setNames(as.character(metadata$labels), metadata$contrasts)
+    template <- paste(
+      "<b>%{text}</b><br>",
+      "<i>log2fc</i>: %{x:.2f}<br>",
+      "<i>padj</i>: %{y:.2f}",
+      "<extra></extra>"
+    )
+
+    # gtf <- conn %>%
+    #   tbl("gtf") %>%
+    #   collect()
+    #
+    # gtf_gene_id <- gtf$gene_id %>% unique()
+    # gtf_transcript_id <- gtf$transcript_id %>% unique()
+    data_dge <- tbl(conn, "dge") %>%
+      select(-c(baseMean, lfcSE, stat, pvalue, gene_name)) %>%
+      filter(
+        # gene_id %in% gtf_gene_id,
+        padj < 0.05, abs(log2FoldChange) > 1
+      ) %>%
+      filter(contrasts %in% !!contrast) %>%
+      mutate(logpadj = -log10(padj + 1e-10)) %>%
+      collect() %>%
+      left_join(metadata %>% select(contrasts, contrast_label), by = join_by(contrasts)) %>%
+      left_join(anno %>% select(gene_id, ref_gene_name), by = join_by(gene_id)) %>%
+      distinct()
+
+    data_dte <- tbl(conn, "dte") %>%
+      select(-c(exonBaseMean, dispersion, stat, pvalue)) %>%
+      rename(log2FoldChange = log2fold) %>%
+      filter(
+        # transcript_id %in% gtf_transcript_id,
+        padj < 0.05, abs(log2FoldChange) > 1
+      ) %>%
+      filter(contrasts %in% !!contrast) %>%
+      mutate(logpadj = -log10(padj + 1e-10)) %>%
+      collect() %>%
+      left_join(anno %>% select(gene_id, ref_gene_name), by = join_by(gene_id), multiple = "first") %>%
+      left_join(metadata %>% select(contrasts, contrast_label), by = join_by(contrasts)) %>%
+      distinct()
+
+    plotly_painel <- function(x) {
+      x_subset <- x %>%
+        filter(target) %>%
+        mutate(i = n())
+
+      r <- 2
+      theta <- 2 * pi / nrow(x_subset)
+
+      plot_ly(
+        x,
+        x = ~log2FoldChange,
+        y = ~logpadj,
+        text = ~text,
+        type = "scatter",
+        mode = "markers",
+        hovertemplate = template,
+        marker = list(
+          color = "rgba(0,0,0,0.2)"
+        )
+      ) %>%
+        add_trace(
+          data = x_subset,
+          marker = list(color = "red")
+        ) %>%
+        add_annotations(
+          data = x_subset,
+          showarrow = TRUE,
+          arrowcolor = toRGB("red"),
+          arrowhead = 3,
+          # ax=r*sin(~i*theta),
+          # ay=r*cos(~i*theta),
+          # axref="x",
+          # ayref="y",
+          # xanchor="center",
+          # yanchor="bottom",
+          font = list(size = 14, color = toRGB("red"))
+        ) %>%
+        add_annotations(
+          text = ~ unique(x$contrast_label),
+          x = 0.4,
+          y = .975,
+          yref = "paper",
+          xref = "paper",
+          yanchor = "bottom",
+          xanchor = "center",
+          showarrow = FALSE,
+          font = list(size = 10)
+        ) %>%
+        layout(
+          showlegend = FALSE,
+          shapes = list(
+            type = "rect",
+            x0 = 0,
+            x1 = .8,
+            xref = "paper",
+            y0 = -10,
+            y1 = 50,
+            yanchor = 1,
+            yref = "paper",
+            ysizemode = "pixel",
+            fillcolor = toRGB("gray80"),
+            line = list(color = "transparent")
+          )
+        ) %>%
+        config(displaylogo = FALSE, modeBarButtonsToRemove = c(
+          "select2d", "drawopenpath", "drawline", "drawrect", "drawcircle",
+          "eraseshape", "hoverClosestCartesian", "hoverCompareCartesian",
+          "lasso2d"
+        ))
+    }
 
     output$gene_counts <- renderPlotly({
+      data <- data_dge %>%
+        rename(text = ref_gene_name) %>%
+        mutate(target = gene_id == !!g_id)
 
-      data <- conn %>%
-        tbl("dge") %>%
-        filter(contrasts %in% !!contrast) %>%
-        mutate(
-          logpadj = -log10(padj + 1e-10)
+      validate(need(nrow(data %>% filter(target)) > 0, "No DGE significant calls."))
+
+      data %>%
+        group_by(contrasts) %>%
+        group_map(.f = ~ plotly_painel(.x)) %>%
+        subplot(nrows = 1, shareY = TRUE) %>%
+        layout(
+          title = list(text = "DGE"),
+          xaxis = list(title = "log2fc"),
+          yaxis = list(title = "padj")
         ) %>%
-        collect()
-
-      p <- data %>%
-        ggplot(aes(x = log2FoldChange, y = logpadj, label = gene_name)) +
-        geom_point(color = 'gray', alpha= .20) +
-        geom_point(data=data %>% filter(gene_id == !!g_id), color='red') +
-        theme_minimal() +
-        facet_grid(
-          . ~ contrasts,
-          labeller =  labeller(contrasts=meta_labeller))
-
-      p %>%
-        ggplotly() %>%
-        config(displaylogo = FALSE) %>%
-        layout(dragmode = "select", hovermode = "x") %>%
         toWebGL()
-
     })
 
     output$trancript_proportions <- renderPlotly({
-      data <- conn %>%
-        tbl("dte") %>%
-        filter(contrasts %in% !!contrast) %>%
+      data <- data_dte %>%
         mutate(
-          logpadj = -log10(padj + 1e-10)
+          target = transcript_id %in% !!t_id,
+          text = str_c(ref_gene_name, transcript_id, sep = "-")
+        )
+      validate(need(nrow(data %>% filter(target)) > 0, "No DTE significant calls."))
+
+      data %>%
+        group_by(contrasts) %>%
+        group_map(.f = ~ plotly_painel(.x)) %>%
+        subplot(nrows = 1, shareY = TRUE) %>%
+        layout(
+          title = list(text = "DTE"),
+          xaxis = list(title = "log2fc"),
+          yaxis = list(title = "padj")
         ) %>%
-        collect()
-
-      p <- data %>%
-        ggplot(aes(x = log2fold, y = logpadj, label = gene_id)) +
-        geom_point(color = 'gray', alpha= .20) +
-        geom_point(data=data %>% filter(gene_id == !!g_id), color='red') +
-        facet_grid(
-          . ~ contrasts,
-          labeller =  labeller(contrasts=meta_labeller)) +
-        theme_minimal()
-
-      p %>%
-        ggplotly() %>%
-        config(displaylogo = FALSE) %>%
         toWebGL()
-
     })
 
     output$gene_structure <- renderPlot({
+      gtf <- tbl(conn, "gtf") %>%
+        filter(gene_id == !!g_id) %>%
+        collect()
+
       transcript <- gtf %>%
         dplyr::filter(type == "transcript") %>%
         filter(cds_source %in% cds) %>%
         mutate(PTC = as.character(color == "#FF0000"))
 
       gtf <- gtf %>%
+        filter(gene_id == !!g_id) %>%
         select(-c(cds_source, color)) %>%
         dplyr::filter(type != "transcript") %>%
         left_join(transcript %>% select(cds_source, PTC, Name), by = "Name") %>%
