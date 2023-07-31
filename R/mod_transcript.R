@@ -155,7 +155,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           )
         ) %>%
         select(-c(seqnames, start, Name, end, color)) %>%
-        distinct()
+        distinct(transcript_id, cds_id, contrasts, .keep_all = TRUE)
 
       reactable(
         df,
@@ -246,7 +246,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           ),
           trackhub_url = colDef(
             header = with_tooltip(
-              "trackhub_url", "Link to the UCSC Genome Browser Trackhub."
+              "trackhub", "Link to the UCSC Genome Browser Trackhub."
             ),
             width = 60,
             show = TRUE,
