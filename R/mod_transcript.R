@@ -85,7 +85,6 @@ transcript_plot <- function(gtf) {
 #' @noRd
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
-
     transcripts <- tbl(conn, "gtf") %>%
       filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
       select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
@@ -134,7 +133,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
       cds_position <- not_transcrips %>%
         filter(type == "CDS") %>%
         group_by(transcript_id, cds_id) %>%
-        summarise(seqnames = first(seqnames), start = min(start), end =max(end)) %>%
+        summarise(seqnames = first(seqnames), start = min(start), end = max(end)) %>%
         ungroup() %>%
         mutate(cds_position = position_from_gtf(.)) %>%
         select(transcript_id, cds_id, cds_position)
@@ -153,7 +152,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             class_code %in% c("c", "j", "k") ~ "Splicing variants",
             TRUE ~ "Other"
           )
-        )  %>%
+        ) %>%
         select(-c(seqnames, start, Name, end, color)) %>%
         distinct()
 
@@ -162,12 +161,12 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         highlight = TRUE,
         wrap = FALSE,
         details = function(index) {
-          if (!is.na(df[[index, "cds_source"]])) {
+          if (!is.na(df[[index, "contrasts"]])) {
             data <- df[index, ]
             text_color <- ifelse(data$log2fold > 0, "red", "blue")
 
             p <- l2fc %>%
-              filter(!is.na(log2fold), contrasts == data[['contrasts']]) %>%
+              filter(!is.na(log2fold), contrasts == data[["contrasts"]]) %>%
               ggplot(aes(y = contrasts, x = log2fold)) +
               geom_boxplot() +
               geom_vline(data = data, colour = text_color, aes(xintercept = log2fold)) +
@@ -212,13 +211,6 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             cell = function(value) {
               if_else(value == "FALSE", "\u274c", "\u2713", missing = "")
             }
-          ),
-          cds_position = colDef(
-            # header = with_tooltip(
-            #   "LRS", "\u2713 if the transcript has long read support else \u274c."
-            # ),
-            width = 200,
-            show = TRUE
           ),
           transcript_id = colDef(
             header = with_tooltip(
@@ -292,6 +284,27 @@ function(cellInfo) {
   }
 }")
           ),
+          CDS = colDef(
+            header = with_tooltip(
+              "CDS", "Info on the CDS."
+            ),
+            width = 160,
+            show = TRUE,
+            html = TRUE,
+            vAlign = "center",
+            cell = JS("
+function(cellInfo) {
+  const source = cellInfo.row['cds_source'];
+  const i = cellInfo.row['cds_id'];
+  const pos = cellInfo.row['cds_position'];
+
+  if (i === null) {
+    return 'No CDS';
+  } else {
+    return `<div><strong>${id}</strong><br><small><i>Source</i>: ${source};<i> pos</i>: ${pos}</small></div>`;
+  }
+}")
+          ),
           padj = colDef(
             header = with_tooltip(
               "padj", "DTE adjusted p-value."
@@ -311,6 +324,15 @@ function(cellInfo) {
             filterable = FALSE
           ),
           Knockdown = colDef(
+            show = FALSE
+          ),
+          cds_source = colDef(
+            show = FALSE
+          ),
+          cds_id = colDef(
+            show = FALSE
+          ),
+          cds_position = colDef(
             show = FALSE
           ),
           Knockout = colDef(
