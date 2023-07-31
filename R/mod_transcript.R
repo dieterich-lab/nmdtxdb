@@ -238,31 +238,26 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           ),
           transcript_id = colDef(
             header = with_tooltip(
-              "transcript_id", "Internal assembly identifier."
+              "transcript_id", "Identifier and link to the UCSC Genome Browser Trackhub."
             ),
             width = 160,
             show = TRUE,
             vAlign = "center",
-          ),
-          trackhub_url = colDef(
-            header = with_tooltip(
-              "trackhub", "Link to the UCSC Genome Browser Trackhub."
-            ),
-            width = 60,
-            show = TRUE,
-            align = "center",
-            vAlign = "center",
             html = TRUE,
             cell = JS("
-function(cellInfo) {
+function (cellInfo) {
+  const tid = cellInfo.row['transcript_id'];
   const url = cellInfo.row['trackhub_url'];
 
   if (url === undefined) {
-    return '';
+    return tid;
   } else {
-    return `<a href='${url}' target='_blank'>URL</a>`;
+    return `<a href='${url}' target='_blank'>${tid}</a>`;
   }
 }")
+      ),
+          trackhub_url = colDef(
+            show = FALSE,
           ),
           ref_transcript_name = colDef(
             header = with_tooltip(
@@ -279,12 +274,9 @@ function(cellInfo) {
   const lab1 = '<div>' + '<strong>' + cellInfo.value + '</strong> </div>'
   const lab2 = '<div><small><i>Match</i>: ' + cc + '</small></div>';
 
-  if (ti === undefined) {
-    return lab;
-  } else {
-    const url = 'http://www.ensembl.org/id/' + ti;
-    return `<a href='${url}' target='_blank'>${lab1}</a>${lab2}`;
-  }
+  const url = 'http://www.ensembl.org/id/' + ti;
+  return `<a href='${url}' target='_blank'>${lab1}</a>${lab2}`;
+
 }")
           ),
           contrasts = colDef(
