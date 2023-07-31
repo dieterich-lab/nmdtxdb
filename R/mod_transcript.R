@@ -142,6 +142,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         left_join(dte, by = "transcript_id", multiple = "all") %>%
         left_join(transcripts, by = "transcript_id", multiple = "all") %>%
         left_join(cds_position, by = "transcript_id", multiple = "all") %>%
+        left_join(cds_source_choices, by = "cds_source", multiple = "all") %>%
         select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
         mutate(
           log2fold = round(log2fold, 2),
@@ -188,6 +189,29 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           sortNALast = TRUE
         ),
         columns = list(
+          cds_id = colDef(
+            header = with_tooltip(
+              "CDS_info", "Info on the CDS."
+            ),
+            width = 210,
+            show = TRUE,
+            align = "left",
+            vAlign = "center",
+            html = TRUE,
+            cell = JS("
+ function(cellInfo) {
+   const cds_source = cellInfo.row['cds_source2'];
+   const cds_id = cellInfo.row['cds_id'];
+   const cds_position = cellInfo.row['cds_position'];
+
+   if (cds_id === null) {
+     return 'No CDS';
+   } else {
+     return `<div><strong>${cds_id}</strong><br><small><i>Source</i>: ${cds_source};<i> Position</i>: ${cds_position}</small></div>`;
+
+   }
+ }")
+          ),
           PTC = colDef(
             header = with_tooltip(
               "PTC", "\u2713 if the transcript has a PTC else \u274c."
@@ -327,6 +351,9 @@ function(cellInfo) {
             show = FALSE
           ),
           cds_source = colDef(
+            show = FALSE
+          ),
+          cds_source2 = colDef(
             show = FALSE
           ),
           cds_id = colDef(
