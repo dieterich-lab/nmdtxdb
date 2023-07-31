@@ -3,6 +3,12 @@ INITIAL_CONTRAST <- c(
   "HEK_SMG7KO_SMG5KD-KD_Z319-vs-HEK_SMG7KO_LucKD-KD_Z319"
 )
 
+cds_source_choices <- data.frame(
+  cds_source = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
+  cds_source2 = c("Ensembl", "Gao et al., 2015", "OpenProt", "Zhang et al., 2017", "TransDecoder")
+)
+
+
 #' The application server-side
 #'
 #' @param input,output,session Internal parameters for {shiny}.
@@ -18,10 +24,6 @@ app_server <- function(input, output, session) {
 
   metadata <- load_metadata(conn)
 
-  cds_source_choices <- data.frame(
-    cds_source = c("ensembl", "hek293gao", "openprot", "ribotish", "transdecoder"),
-    cds_source2 = c("Ensembl", "Gao et al., 2015", "OpenProt", "Zhang et al., 2017", "TransDecoder")
-  )
 
   gene_feat <- tbl(conn, "gene_feat") %>% collect()
 
