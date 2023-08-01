@@ -182,7 +182,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
               theme(
                 axis.text.y = element_blank()
               )
-            htmltools::plotTag(p, alt = "plots")
+
+            htmltools::plotTag(p, alt = "plots", height = 150)
           }
         },
         theme = reactableTheme(
