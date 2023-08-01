@@ -136,7 +136,13 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         summarise(seqnames = first(seqnames), start = min(start), end = max(end)) %>%
         ungroup() %>%
         mutate(cds_position = position_from_gtf(.)) %>%
-        select(transcript_id, cds_id, cds_position)
+        select(transcript_id, cds_id, cds_position) %>%
+        mutate(
+          cds_trackhub_url = purrr::map(
+            cds_position,
+            \(x) create_trackhub_url(position = x)
+          ) %>% unlist()
+        )
 
       df <- anno %>%
         left_join(dte, by = "transcript_id", multiple = "all") %>%
@@ -191,7 +197,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         columns = list(
           cds_id = colDef(
             header = with_tooltip(
-              "CDS_info", "Info on the CDS."
+              "CDS_info", "CDS ID, provenance and URL to the trackhub."
             ),
             width = 210,
             show = TRUE,
@@ -199,18 +205,17 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             vAlign = "center",
             html = TRUE,
             cell = JS("
- function(cellInfo) {
-   const cds_source = cellInfo.row['cds_source2'];
-   const cds_id = cellInfo.row['cds_id'];
-   const cds_position = cellInfo.row['cds_position'];
+function (cellInfo) {
+  const cds_source = cellInfo.row['cds_source2'];
+  const cds_id = cellInfo.row['cds_id'];
+  const cds_trackhub_url = cellInfo.row['cds_trackhub_url'];
 
-   if (cds_id === null) {
-     return 'No CDS';
-   } else {
-     return `<div><strong>${cds_id}</strong><br><small><i>Source</i>: ${cds_source};<i> Position</i>: ${cds_position}</small></div>`;
-
-   }
- }")
+  if (cds_id === null) {
+    return 'No CDS';
+  } else {
+    return `<div><a href='${cds_trackhub_url}' target='_blank'>${cds_id}</a></div><div><small><i>Source</i>: ${cds_source}</small></div>`;
+  }
+}")
           ),
           PTC = colDef(
             header = with_tooltip(
@@ -255,7 +260,7 @@ function (cellInfo) {
     return `<a href='${url}' target='_blank'>${tid}</a>`;
   }
 }")
-      ),
+          ),
           trackhub_url = colDef(
             show = FALSE,
           ),
@@ -300,27 +305,6 @@ function(cellInfo) {
   }
 }")
           ),
-          CDS = colDef(
-            header = with_tooltip(
-              "CDS", "Info on the CDS."
-            ),
-            width = 160,
-            show = TRUE,
-            html = TRUE,
-            vAlign = "center",
-            cell = JS("
-function(cellInfo) {
-  const source = cellInfo.row['cds_source'];
-  const i = cellInfo.row['cds_id'];
-  const pos = cellInfo.row['cds_position'];
-
-  if (i === null) {
-    return 'No CDS';
-  } else {
-    return `<div><strong>${id}</strong><br><small><i>Source</i>: ${source};<i> pos</i>: ${pos}</small></div>`;
-  }
-}")
-          ),
           padj = colDef(
             header = with_tooltip(
               "padj", "DTE adjusted p-value."
@@ -352,6 +336,9 @@ function(cellInfo) {
             show = FALSE
           ),
           cds_position = colDef(
+            show = FALSE
+          ),
+          cds_trackhub_url = colDef(
             show = FALSE
           ),
           Knockout = colDef(
