@@ -253,7 +253,7 @@ function (cellInfo) {
             cell = JS("
 function (cellInfo) {
   const tid = cellInfo.row['transcript_id'];
-  const url = cellInfo.row['trackhub_url'];
+  const url = cellInfo.row['trackhub_url'] || undefined;
 
   if (url === undefined) {
     return tid;
