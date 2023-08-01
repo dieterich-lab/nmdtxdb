@@ -358,7 +358,7 @@ load_metadata <- function(conn) {
         .,
         "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}"
       ),
-      label = str_c(Knockdown, Knockout, sep = "_")
+      label = str_c(Knockdown, Knockout, cellline, sep = "_")
     )
 }
 

@@ -24,7 +24,6 @@ app_server <- function(input, output, session) {
 
   metadata <- load_metadata(conn)
 
-
   gene_feat <- tbl(conn, "gene_feat") %>% collect()
 
   gene_info <- reactiveVal()
@@ -69,7 +68,8 @@ app_server <- function(input, output, session) {
       rename(label = cds_source2) %>%
       mutate(
         cds_source = as.factor(cds_source),
-        levels(cds_source_choices$cds_source)) %>%
+        levels(cds_source_choices$cds_source)
+      ) %>%
       arrange(cds_source) %>%
       mutate(cds_source = as.character(cds_source))
 
