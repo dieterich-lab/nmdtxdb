@@ -87,6 +87,10 @@ transcript_plot <- function(gtf) {
 #' @noRd
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
+    l2fc <- tbl(conn, "dte") %>%
+      filter(contrasts %in% !!contrast) %>%
+      collect()
+
     transcripts <- tbl(conn, "gtf") %>%
       filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
       select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
@@ -121,9 +125,6 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         left_join(load_metadata(conn), by = "contrasts") %>%
         select(-name)
 
-      l2fc <- tbl(conn, "dte") %>%
-        filter(contrasts %in% !!contrast) %>%
-        collect()
 
       anno <- tbl(conn, "anno") %>%
         filter(transcript_id %in% !!tx) %>%
@@ -149,9 +150,9 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
 
       df <- anno %>%
         left_join(dte, by = "transcript_id", multiple = "all") %>%
-        left_join(transcripts, by = "transcript_id", multiple = "all") %>%
-        left_join(cds_position, by = "transcript_id", multiple = "all") %>%
-        left_join(cds_source_choices, by = "cds_source", multiple = "all") %>%
+        left_join(transcripts, by = 'transcript_id', multiple = "all") %>%
+        left_join(cds_position, by = "transcript_id", multiple = "any") %>%
+        left_join(cds_source_choices, by = "cds_source", multiple = "any") %>%
         select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
         mutate(
           log2fold = round(log2fold, 2),
@@ -164,10 +165,13 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           )
         ) %>%
         select(-c(seqnames, start, Name, end, color)) %>%
-        distinct(transcript_id, cds_id, cds_source2, contrasts, .keep_all = TRUE)
+        distinct(transcript_id, cds_id, cds_source, contrasts, .keep_all = TRUE)
 
       reactable(
         df,
+        defaultSorted = c("PTC"),
+        defaultPageSize = 5,
+        bordered = TRUE,
         highlight = TRUE,
         wrap = FALSE,
         details = function(index) {
@@ -225,8 +229,9 @@ function (cellInfo) {
             header = with_tooltip(
               "PTC", "\u2713 if the transcript has a PTC else \u274c."
             ),
+            defaultSortOrder = "desc",
             show = TRUE,
-            width = 60,
+            width = 80,
             align = "center",
             vAlign = "center",
             cell = function(value) {
