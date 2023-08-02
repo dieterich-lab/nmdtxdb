@@ -16,7 +16,7 @@ app_ui <- function(request) {
         sidebar_panel(
           width = 2,
           img(
-            src = "www/nmdtxdb_logo.png",
+            src = "www/logo.svg",
             style = "width: 100%;"),
           selectizeInput(
             inputId = "gene_select",
