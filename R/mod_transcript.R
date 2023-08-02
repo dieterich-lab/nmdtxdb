@@ -123,8 +123,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         select(transcript_id, contrasts, padj, log2fold) %>%
         collect() %>%
         left_join(load_metadata(conn), by = "contrasts") %>%
-        select(-name)
-
+        select(-name) %>%
+        collect()
 
       anno <- tbl(conn, "anno") %>%
         filter(transcript_id %in% !!tx) %>%
@@ -148,11 +148,23 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           ) %>% unlist()
         )
 
+      cds_data <- transcripts %>%
+        rename(cds_id = Name) %>%
+        left_join(cds_position, by = c("transcript_id", "cds_id")) %>%
+        mutate(
+          cds_source2 = case_match(
+            cds_source,
+            "ensembl" ~ "Ensembl",
+            "hek293gao" ~ "Gao et al., 2015",
+            "openprot" ~ "OpenProt",
+            "ribotish" ~ "Zhang et al., 2017",
+            "transdecoder" ~ "TransDecoder"
+          )
+        )
+
       df <- anno %>%
         left_join(dte, by = "transcript_id", multiple = "all") %>%
-        left_join(transcripts, by = 'transcript_id', multiple = "all") %>%
-        left_join(cds_position, by = "transcript_id", multiple = "any") %>%
-        left_join(cds_source_choices, by = "cds_source", multiple = "any") %>%
+        left_join(cds_data, by = "transcript_id", multiple = "all") %>%
         select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
         mutate(
           log2fold = round(log2fold, 2),
@@ -162,9 +174,9 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             class_code == "n" ~ "Retained introns",
             class_code %in% c("c", "j", "k") ~ "Splicing variants",
             TRUE ~ "Other"
-          )
+          ),
         ) %>%
-        select(-c(seqnames, start, Name, end, color)) %>%
+        select(-c(seqnames, start, end, color)) %>%
         distinct(transcript_id, cds_id, cds_source, contrasts, .keep_all = TRUE)
 
       reactable(
