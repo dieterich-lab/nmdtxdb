@@ -43,7 +43,7 @@ transcript_plot <- function(gtf) {
   introns <- to_intron(exons, group_var = "Name")
   feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
 
-  p <- exons %>%
+  exons %>%
     ggplot(aes(
       xstart = start,
       xend = end,
@@ -64,16 +64,18 @@ transcript_plot <- function(gtf) {
     geom_intron(
       data = introns,
       aes(strand = strand),
+      arrow = grid::arrow(ends = "last", length = grid::unit(0.1, "inches"))
     ) +
     scale_fill_manual(values = feat_colors) +
-    theme_minimal()
-  labs(y = "") +
+    facet_wrap(~cds_source2, ncol = 1, scales = "free_y", strip.position = "left") +
+    theme_linedraw() +
+    labs(y = "") +
     theme(
+      text = element_text(size = 10),
       axis.ticks = element_blank(),
       axis.text.x = element_blank(),
       legend.position = "top"
     )
-  return(p)
 }
 
 #' transcript view Server Functions
@@ -105,7 +107,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         x = transcripts %>% select(Name, cds_source, PTC),
         y = select(., !c(cds_source)),
         by = "Name", multiple = "all"
-      )
+      ) %>%
+      left_join(cds_source_choices, by = "cds_source", multiple = "all")
 
     output$table_transcript <- renderReactable({
       dte <- tbl(conn, "dte") %>%
@@ -161,7 +164,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           )
         ) %>%
         select(-c(seqnames, start, Name, end, color)) %>%
-        distinct(transcript_id, cds_id, contrasts, .keep_all = TRUE)
+        distinct(transcript_id, cds_id, cds_source2, contrasts, .keep_all = TRUE)
 
       reactable(
         df,
@@ -372,8 +375,6 @@ function(cellInfo) {
         )
       )
     })
-    output$gene_structure <- renderPlot({
-      transcript_plot(not_transcrips)
-    })
+    output$gene_structure <- renderPlot(transcript_plot(not_transcrips), res = 150)
   })
 }
