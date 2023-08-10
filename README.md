@@ -21,7 +21,18 @@ devtools::install_github("https://github.com/dieterich-lab/nmd-app")
 
 ## Dev
 
--   TODO
+### Resolving Renv::restore()
+
+renv::restore() will failed because there are dependencies of ggtranscript
+it cannot find. This can be solved by installing these with 
+```
+renv::install('bioc::GenomicRanges')
+renv::restore()
+```
+As described in `deploy/Dockerfile`.
+
+In addition, shared libraries from a conda enviroment my interfere with R, 
+remeber to deactivate the enviroment once executing the Renv::update().
 
 ## Deployment
 
