@@ -61,7 +61,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
         wrap = FALSE,
         details = function(index) {
           fc_boxplot(dge, index, gene_l2fc, c(xmin, xmax)) %>%
-            htmltools::plotTag(p, alt = "plots", height = 150)},
+            htmltools::plotTag(., alt = "plots", height = 150) },
         theme = reactableTheme(
           borderColor = "#dfe2e5",
           stripedColor = "#f6f8fa",
