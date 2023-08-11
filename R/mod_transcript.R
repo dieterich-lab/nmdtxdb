@@ -58,17 +58,20 @@ mod_transcript_ui <- function(id) {
 # build_dotplot(df, y_labs)
 #'
 build_dotplot <- function(df, y_labs) {
-  df %>%
+  df <- df %>%
     select(cds_id, cds_source2, label, padj, log2fold) %>%
     filter(cds_id %in% y_labs) %>%
-    mutate(cds_id = factor(cds_id, levels = y_labs), label = str_replace_all(label, "_", "\n")) %>%
-    ggplot(aes(x = label, y = cds_id, size = -log10(as.numeric(padj) + 1e-20), color = log2fold)) +
+    mutate(cds_id = factor(cds_id, levels = y_labs), label = str_replace_all(label, "_", "\n"))
+
+  ggplot(df, aes(x = label, y = cds_id, size = -log10(as.numeric(padj) + 1e-20), color = log2fold)) +
     labs(color = "log2fold: ", size = "-log10(padj):") +
     geom_point() +
     theme_linedraw() +
     labs(y = "", x = "") +
     facet_grid(cds_source2 ~ label, scales = "free") +
-    scale_color_gradient2(low = "black", mid = "aliceblue", high = "firebrick") +
+    scale_color_gradient2(
+      low = "black", mid = "aliceblue", high = "firebrick",
+      oob = scales::squish, limits=c(-5, 5)) +
     theme(
       text = element_text(size = 10),
       axis.text.y = element_blank(),
@@ -142,7 +145,7 @@ build_transcript_plot <- function(gtf) {
     geom_intron(
       data = introns,
       aes(strand = strand),
-      arrow = grid::arrow(ends = "last", length = grid::unit(0.4, "lines"))
+      arrow = grid::arrow(ends = "last", length = grid::unit(0.4, "lines")),
     ) +
     scale_fill_manual(values = feat_colors) +
     labs(fill = "PTC:") +
@@ -484,9 +487,15 @@ function(cellInfo) {
         p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
           theme(
-            legend.position = "top",
-            legend.text = element_text(size=8),
-            legend.key.height = unit(0.1, "cm"),
+            legend.box="vertical",
+            legend.position = "left",
+            legend.margin=margin(),
+            legend.box.margin = margin(6, 6, 6, 6),
+            legend.text = element_text(size=6),
+            legend.title=ggplot2::element_text(size=6,face="bold"),
+            legend.key.size = unit(0.9, "line"),
+            legend.key.width = unit(1, "line"),
+            legend.key.height = unit(0.8, "line"),
             panel.spacing.x= unit(0.1, "cm"),
             panel.spacing.y= unit(0.1, "cm")
           )
