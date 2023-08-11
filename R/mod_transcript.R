@@ -62,7 +62,7 @@ build_dotplot <- function(df, y_labs) {
     select(cds_id, cds_source2, label, padj, log2fold) %>%
     filter(cds_id %in% y_labs) %>%
     mutate(cds_id = factor(cds_id, levels = y_labs), label = str_replace_all(label, "_", "\n")) %>%
-    ggplot(aes(x = label, y = cds_id, size = -log10(as.numeric(padj)), color = log2fold)) +
+    ggplot(aes(x = label, y = cds_id, size = -log10(as.numeric(padj) + 1e-20), color = log2fold)) +
     labs(color = "log2fold: ", size = "-log10(padj):") +
     geom_point() +
     theme_linedraw() +
