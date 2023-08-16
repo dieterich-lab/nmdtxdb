@@ -1,4 +1,4 @@
-grid <- create_grid(
+this_grid <- create_grid(
   rbind(
     c("top"),
     c("bottom_left")
@@ -17,17 +17,20 @@ grid <- create_grid(
 #' @noRd
 #'
 #' @importFrom shiny NS
+#' @importFrom shiny.semantic grid
+#' @importFrom shinycssloaders withSpinner
 #' @importFrom reactable reactableOutput
-#' @importFrom patchwork plot_layout
 mod_transcript_ui <- function(id) {
   ns <- NS(id)
 
   grid(
-    grid,
+    this_grid,
     top = reactableOutput(ns("table_transcript")) %>%
-      shinycssloaders::withSpinner(),
-    bottom_left = plotOutput(ns("gene_structure")) %>% shinycssloaders::withSpinner(),
-    bottom_right = NULL
+      withSpinner(),
+    bottom_left = div(
+      downloadButton(ns("downloadPlot"), "Download Plot"),
+      plotOutput(ns("gene_structure"))) %>%
+      withSpinner()
   )
 }
 
@@ -102,6 +105,7 @@ build_dotplot <- function(df, y_labs) {
 #' @importFrom grid arrow unit
 #' @importFrom ggplot2 element_text element_blank
 #'
+#'
 #' @examples
 #' gtf <- data.frame(
 #'   type = c("exon", "CDS", "exon", "exon", "CDS", "exon"),
@@ -165,6 +169,7 @@ build_transcript_plot <- function(gtf) {
 #' @import dplyr
 #' @importFrom purrr map
 #' @importFrom reactable getReactableState renderReactable
+#' @importFrom patchwork plot_layout
 #' @import stringr
 #' @importFrom scales scientific
 #' @noRd
@@ -215,6 +220,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         ref_transcript_id, lr_support, class_code
       ) %>%
       collect()
+
+    fname <- file.path(tempdir(),  paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
     cds_position <- not_transcrips %>%
       filter(type == "CDS") %>%
@@ -484,7 +491,7 @@ function(cellInfo) {
           \(x) x$y$get_labels()) |>
           unlist()
         p2 <- build_dotplot(df, y_labs)
-        p1 + p2 +
+        p_final = p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
           theme(
             legend.box="vertical",
@@ -499,8 +506,19 @@ function(cellInfo) {
             panel.spacing.x= unit(0.1, "cm"),
             panel.spacing.y= unit(0.1, "cm")
           )
+      ggsave(fname)
+      p_final
       },
       res = 150
+    )
+
+    output$downloadPlot <- downloadHandler(
+      filename = function() {
+        basename(fname)
+      },
+      content = function(file) {
+        file.copy(fname, file)
+      }, contentType = "image/png"
     )
   })
 }
