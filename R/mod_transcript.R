@@ -29,7 +29,8 @@ mod_transcript_ui <- function(id) {
       withSpinner(),
     bottom_left = div(
       downloadButton(ns("downloadPlot"), "Download Plot"),
-      plotOutput(ns("gene_structure"))) %>%
+      plotOutput(ns("gene_structure"))
+    ) %>%
       withSpinner()
   )
 }
@@ -74,7 +75,8 @@ build_dotplot <- function(df, y_labs) {
     facet_grid(cds_source2 ~ label, scales = "free") +
     scale_color_gradient2(
       low = "black", mid = "aliceblue", high = "firebrick",
-      oob = scales::squish, limits=c(-5, 5)) +
+      oob = scales::squish, limits = c(-5, 5)
+    ) +
     theme(
       text = element_text(size = 10),
       axis.text.y = element_blank(),
@@ -221,7 +223,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
       ) %>%
       collect()
 
-    fname <- file.path(tempdir(),  paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
+    fname <- file.path(tempdir(), paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
     cds_position <- not_transcrips %>%
       filter(type == "CDS") %>%
@@ -269,7 +271,6 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
 
 
     output$table_transcript <- renderReactable({
-
       reactable(
         df,
         defaultSorted = c("PTC"),
@@ -488,26 +489,28 @@ function(cellInfo) {
         p1 <- build_transcript_plot(not_transcrips)
         y_labs <- lapply(
           ggplot_build(p1)$layout$panel_params,
-          \(x) x$y$get_labels()) |>
+          \(x) x$y$get_labels()
+        ) |>
           unlist()
+        validate(need(length(y_labs) < 8, "Too many transcript, download plot instead."))
         p2 <- build_dotplot(df, y_labs)
-        p_final = p1 + p2 +
+        p_final <- p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
           theme(
-            legend.box="vertical",
+            legend.box = "vertical",
             legend.position = "left",
-            legend.margin=margin(),
+            legend.margin = margin(),
             legend.box.margin = margin(6, 6, 6, 6),
-            legend.text = element_text(size=6),
-            legend.title=ggplot2::element_text(size=6,face="bold"),
+            legend.text = element_text(size = 6),
+            legend.title = ggplot2::element_text(size = 6, face = "bold"),
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
             legend.key.height = unit(0.8, "line"),
-            panel.spacing.x= unit(0.1, "cm"),
-            panel.spacing.y= unit(0.1, "cm")
+            panel.spacing.x = unit(0.1, "cm"),
+            panel.spacing.y = unit(0.1, "cm")
           )
-      ggsave(fname)
-      p_final
+        ggsave(fname)
+        p_final
       },
       res = 150
     )
