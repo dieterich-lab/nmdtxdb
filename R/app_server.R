@@ -8,7 +8,6 @@ cds_source_choices <- data.frame(
   cds_source2 = c("Ensembl", "Gao et al., 2015", "OpenProt", "Zhang et al., 2017", "TransDecoder")
 )
 
-
 #' The application server-side
 #'
 #' @param input,output,session Internal parameters for {shiny}.
@@ -33,7 +32,13 @@ app_server <- function(input, output, session) {
     "gene_select",
     choices = gene_feat %>% filter(any_dge) %>% pull("ref_gene_name"),
     server = TRUE,
-    selected = "SRSF1"
+    selected = "SRSF2",
+    options = list(
+      onFocus = I("
+                  function() {
+                  this.clear();
+                  }")
+    )
   )
 
   updateSelectizeInput(
