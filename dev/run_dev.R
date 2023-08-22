@@ -1,9 +1,6 @@
 options(golem.app.prod = FALSE, warn = 1)
-options(shiny.port = httpuv::randomPort())
 options(shiny.fullstacktrace = TRUE)
 golem::detach_all_attached()
 golem::document_and_reload()
-# lintr::lint_package()
-# styler::style_pkg()
 run_app()
 

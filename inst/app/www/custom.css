@@ -1,0 +1,7 @@
+.shiny-output-error-validation {
+  color: #ff0000;
+  font-weight: bold;
+}
+.selectize-input.input-active > .item {
+    background:#CCC;
+}

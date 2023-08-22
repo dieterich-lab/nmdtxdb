@@ -28,8 +28,8 @@ mod_transcript_ui <- function(id) {
     top = reactableOutput(ns("table_transcript")) %>%
       withSpinner(),
     bottom_left = div(
-      downloadButton(ns("downloadPlot"), "Download Plot"),
-      plotOutput(ns("gene_structure"))
+      plotOutput(ns("gene_structure")),
+      downloadButton(ns("downloadPlot"), "Download Plot")
     ) %>%
       withSpinner()
   )

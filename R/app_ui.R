@@ -18,6 +18,9 @@ app_ui <- function(request) {
           img(
             src = "www/logo.svg",
             style = "width: 100%;"),
+          br(),
+          uiOutput("gene_info"),
+          br(),
           selectizeInput(
             inputId = "gene_select",
             label = h3("Pick a gene:"),
@@ -46,8 +49,6 @@ app_ui <- function(request) {
               plugins = list("remove_button")
             )
           ),
-          uiOutput("gene_info"),
-          br(),
           div(
             action_button(
               input_id = "action_button_feedback",
