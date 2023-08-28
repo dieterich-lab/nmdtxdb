@@ -252,23 +252,6 @@ plot_annotation <- function(gtf) {
 }
 
 
-#' Creates a connection to the database
-#' @importFrom DBI dbConnect
-#' @importFrom RPostgres Postgres
-connect_db <- function(dbname = "nmd_transcriptome_v1",
-                       host = Sys.getenv("NMD_PGHOST"),
-                       port = Sys.getenv("NMD_PGPORT"),
-                       password = Sys.getenv("NMD_PGPASSWORD"),
-                       user = Sys.getenv("NMD_PGUSER")) {
-  dbConnect(
-    Postgres(),
-    dbname = dbname,
-    host = host,
-    port = port,
-    password = password,
-    user = user,
-  )
-}
 
 #' Simplifies grid creation
 #' @note does not support mobile grid.

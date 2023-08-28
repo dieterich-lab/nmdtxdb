@@ -13,7 +13,6 @@ cds_source_choices <- data.frame(
 #' @param input,output,session Internal parameters for {shiny}.
 #' @import shiny
 #' @import shiny.semantic
-#' @import crosstalk
 #' @import dplyr
 #' @noRd
 app_server <- function(input, output, session) {

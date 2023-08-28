@@ -7,48 +7,32 @@ RUN apt-get update \
     && add-apt-repository ppa:criu/ppa \
     && apt-get update \
     && apt-get install -y \
+    software-properties-common \
+    sudo \
     criu \
-    git \
-    libbz2-dev \
-    libcairo2-dev \
-    libfftw3-dev \
-    libfontconfig1-dev \
-    libfreetype6-dev \
-    libfribidi-dev \
-    libgit2-dev \
-    libharfbuzz-dev \
-    libicu-dev \
-    libjpeg-dev \
-    liblzma-dev \
-    libpng-dev \
-    libpq-dev \
-    libssh2-1-dev \
-    libssl-dev \
-    libtiff-dev \
-    libxml2-dev \
-    libxt-dev \
-    make \
     pandoc \
     pandoc-citeproc \
-    sudo \
-    zlib1g-dev \
+    libcurl4-gnutls-dev \
+    libcairo2-dev \
+    libxt-dev \
+    libssl-dev \
+    libssh2-1-dev \
+    libfftw3-dev \
+    libpq-dev \
+    libglpk-dev \
+    libbz2-dev \
+    liblzma-dev \
+    strace \
     && rm -rf /var/lib/apt/lists/*
 
-
-# Add user to 'staff' group, granting them write privileges to /usr/local/lib/R/site.library
-RUN useradd docker \
-    && mkdir /home/docker \
-    && chown docker:docker /home/docker \
-    && addgroup docker staff
-
 # set options
-COPY Rprofile.site /usr/lib/R/etc/
-RUN mkdir -p renv
-COPY .Rprofile .Rprofile
-COPY renv/activate.R renv/activate.R
-COPY renv/settings.json renv/settings.json
-COPY renv.lock renv.lock
+ENV RENV_PATHS_LIBRARY renv/library
+
+RUN useradd app \
+    && mkdir /app \
+    && chown app /app
 
 ENV RENV_VERSION v1.0.0
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
-RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
+RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}', force=TRUE)"
+

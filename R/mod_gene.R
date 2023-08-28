@@ -17,9 +17,7 @@ mod_gene_ui <- function(id) {
 
 #' gene view Server Functions
 #' @import dplyr
-#' @importFrom crosstalk SharedData
 #' @importFrom forcats fct_reorder
-#' @importFrom ggridges geom_density_ridges theme_ridges
 #' @import reactable
 #' @import stringr
 #' @noRd

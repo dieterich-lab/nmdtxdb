@@ -1,7 +1,6 @@
 #' Updated db
 #'
 #' @import dplyr
-#' @import DBI
 #' @import stringr
 #' @import DESeq2
 #' @import tidyr
