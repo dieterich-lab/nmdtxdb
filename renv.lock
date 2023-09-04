@@ -1,8 +1,7 @@
 {
   "R": {
     "Version": "4.2.1",
-    "Repositories": [
-      {
+    "Repositories": [{
         "Name": "BioCsoft",
         "URL": "https://bioconductor.org/packages/3.16/bioc"
       },
@@ -24,7 +23,7 @@
       },
       {
         "Name": "CRAN",
-        "URL": ""https://cloud.r-project.org"
+        "URL": "https://cloud.r-project.org"
       }
     ]
   },
@@ -1761,6 +1760,25 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "0d0056cc5383fbc240ccd0cb584bf436"
+    },
+    "nmdtx": {
+      "Package": "nmdtx",
+      "Version": "0.0.0.9000",
+      "Source": "/app/app.tar.gz"
+    },
+    "extrafont": {
+      "Package": "extrafont",
+      "Version": "0.19",
+      "Source": "Repository"
+    },
+     "DESeq2": {
+      "Package": "DESeq2",
+      "Source": "Bioconductor"
+    },
+     "markdown": {
+      "Package": "markdown",
+      "Version": "1.8",
+      "Source": "Repository"
     }
   }
 }
