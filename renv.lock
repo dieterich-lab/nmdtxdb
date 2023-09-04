@@ -24,7 +24,7 @@
       },
       {
         "Name": "CRAN",
-        "URL": "https://packagemanager.posit.co/cran/2023-03-14"
+        "URL": ""https://cloud.r-project.org"
       }
     ]
   },
