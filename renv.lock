@@ -869,21 +869,6 @@
       ],
       "Hash": "40401c9cf2bc2259dfe83311c9384710"
     },
-    "lattice": {
-      "Package": "lattice",
-      "Version": "0.21-8",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "grDevices",
-        "graphics",
-        "grid",
-        "stats",
-        "utils"
-      ],
-      "Hash": "0b8a6d63c8770f02a8b5635f3c431e6b"
-    },
     "lazyeval": {
       "Package": "lazyeval",
       "Version": "0.2.2",
