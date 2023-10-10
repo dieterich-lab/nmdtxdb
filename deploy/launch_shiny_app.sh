@@ -1,9 +1,7 @@
 #!/bin/bash
-
 export RENV_WATCHDOG_ENABLED=0
-R -e 'renv::init(bioconductor=TRUE); renv::restore(prompt = FALSE); renv::isolate()'
-R -e "remotes::install_local('app.tar.gz', upgrade='never', repos = NULL)"
-rm app.tar.gz
+
+R -e 'renv::install("markdown"); install.packages("app.tar.gz", repos = NULL, type ="source"); renv::isolate()'
 
 echo "Running renv $(pidof  R)"
 setsid R -f rstart.R > /app/rlogs.log 2>&1 &

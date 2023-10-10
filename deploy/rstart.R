@@ -1,6 +1,6 @@
-devtools::load_all()
-source("app.R")
-source("database.R")
+library(nmdtx)
+options("golem.app.prod" = TRUE)
+db <- readRDS("/data/database.RDS")
 gc()
 
 while (! file.exists('/restore.marker')) {
@@ -17,4 +17,4 @@ Sys.setenv('SHINYPROXY_USERNAME' = shiny_user, 'SHINYPROXY_USERGROUPS' = shiny_g
 print(Sys.getenv('SHINYPROXY_USERNAME'))
 print(Sys.getenv('SHINYPROXY_USERGROUPS'))
 options('shiny.port'=3838, shiny.host='0.0.0.0')
-shiny::runApp('app.R')
+nmdtx::run_app()
