@@ -177,14 +177,12 @@ build_transcript_plot <- function(gtf) {
 #' @noRd
 mod_transcript_server <- function(id, conn, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
-    l2fc <- tbl(conn, "dte") %>%
-      filter(contrasts %in% !!contrast) %>%
-      collect()
+    l2fc <- db[["dte"]] %>%
+      filter(contrasts %in% !!contrast)
 
-    transcripts <- tbl(conn, "gtf") %>%
+    transcripts <- db[["gtf"]] %>%
       filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
       select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
-      collect() %>%
       mutate(
         PTC = color == "#FF0000",
         position = position_from_gtf(.),
@@ -194,9 +192,8 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         ) %>% unlist()
       )
 
-    not_transcrips <- tbl(conn, "gtf") %>%
+    not_transcrips <- db[["gtf"]] %>%
       filter(transcript_id %in% !!tx, type != "transcript") %>%
-      collect() %>%
       left_join(
         x = transcripts %>% select(Name, cds_source, PTC),
         y = select(., !c(cds_source)),
@@ -204,24 +201,21 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
       ) %>%
       left_join(cds_source_choices, by = "cds_source", multiple = "all")
 
-    dte <- tbl(conn, "dte") %>%
+    dte <- db[["dte"]] %>%
       filter(
         transcript_id %in% !!tx,
         contrasts %in% !!contrast
       ) %>%
       select(transcript_id, contrasts, padj, log2fold) %>%
-      collect() %>%
-      left_join(load_metadata(conn), by = "contrasts") %>%
-      select(-name) %>%
-      collect()
+      left_join(load_metadata(db), by = "contrasts") %>%
+      select(-name)
 
-    anno <- tbl(conn, "anno") %>%
-      filter(transcript_id %in% !!tx) %>%
+    anno <- db[["gtf"]] %>%
+      filter(transcript_id %in% !!tx, type == "transcript") %>%
       select(
         ref_gene_name, transcript_id, ref_transcript_name,
-        ref_transcript_id, lr_support, class_code
-      ) %>%
-      collect()
+        ref_transcript_id, lr_support, class_code)
+
 
     fname <- file.path(tempdir(), paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
@@ -251,6 +245,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           cds_source == "transdecoder" ~ "TransDecoder"
         )
       )
+
 
     df <- anno %>%
       left_join(dte, by = "transcript_id", multiple = "all") %>%

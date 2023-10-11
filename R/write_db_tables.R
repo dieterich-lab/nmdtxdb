@@ -1,17 +1,15 @@
 #' Updated db
 #'
 #' @import dplyr
-#' @import DBI
 #' @import stringr
 #' @import tidyr
-#' @importFrom magrittr "%>%"
+#' @import magrittr
 #' @importFrom tibble deframe
 #' @importFrom tidyr fill
 populate_db <- function() {
   base_path <- "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/"
-  conn <- nmdtx:::connect_db()
-  dbListTables(conn)
 
+  db <- list()
 
   metadata <- readRDS(file.path(base_path, "metadata.RDS"))
   metadata <- as.data.frame(metadata)
@@ -56,15 +54,7 @@ populate_db <- function() {
     select(group, cellline, Knockdown, Knockout, group_old) %>%
     mutate(contrasts = group2contrast$contrast[match(group, group2contrast$group)])
 
-  # copy_to(conn,
-  #   metadata,
-  #   "metadata",
-  #   overwrite = TRUE,
-  #   temporary = FALSE,
-  #   indexes = list(
-  #     "contrasts"
-  #   )
-  # )
+  db[["metadata"]] <- metadata
 
   dte <- readRDS(file.path(base_path, "dte_results.RDS")) %>%
     tibble() %>%
@@ -73,97 +63,51 @@ populate_db <- function() {
       log2fold = coalesce(!!!select(., starts_with("log2fold")))
     ) %>%
     select(-starts_with("log2fold_"))
-  dte <- dte %>% dplyr::rename(contrasts = contrast)
+  dte <- dte %>% rename(contrasts = contrast)
 
-  # copy_to(conn,
-  #   dte,
-  #   "dte",
-  #   overwrite = TRUE,
-  #   temporary = FALSE,
-  #   indexes = list(
-  #     "contrasts",
-  #     "gene_id",
-  #     "transcript_id"
-  #   )
-  # )
+  db[["dte"]] <- dte
 
   dge <- readRDS(file.path(base_path, "dge_results.RDS")) %>%
-    dplyr::rename(contrasts = contrast)
-
-  # copy_to(conn,
-  #   dge,
-  #   "dge",
-  #   overwrite = TRUE,
-  #   temporary = FALSE,
-  #   indexes = list(
-  #     "contrasts",
-  #     "gene_name",
-  #     "gene_id"
-  #   )
-  # )
+    rename(contrasts = contrast)
+  db[["dge"]] <- dge
 
   ## GTF ####
-  gtf <- import(file.path(base_path, "gtf_annotated.gtf"))
-  gtf <- as.data.frame(gtf) %>%
-    select(-lr_support, -class_code)
-
+  gtf <- rtracklayer::import(file.path(base_path, "gtf_annotated.gtf"))
+  gtf <- as.data.frame(gtf)
   gtf$transcript_id <- gsub(x = gtf$transcript_id, "\\_.*", "")
-
-
-  copy_to(
-    conn,
-    gtf,
-    "gtf",
-    overwrite = TRUE,
-    temporary = FALSE,
-    indexes = list(
-      "transcript_id",
-      "cds_source"
-    )
-  )
 
   gff_compare <- read.table(
     file.path(base_path, "../stringtie_merge/fix_comp_ref.merged_each.fix.gtf.tmap"),
-    header = 1) %>%
-    select(ref_gene_id, ref_id, qry_gene_id, qry_id, class_code) %>%
-    dplyr::rename(transcript_id = ref_id)
+    header = 1
+  )
 
-  lr_support <- readRDS(file.path(base_path, "lr_support.RDS"))
+  gff_compare %<>%
+    select(ref_gene_id, ref_id, qry_gene_id, qry_id) %>%
+    rename(transcript_id = ref_id)
 
-  ref_anno <- import("/Volumes/beegfs/biodb/genomes/homo_sapiens/GRCh38_102/GRCh38.102.SIRV.gtf") %>%
+  ref_anno <- import("/Volumes/beegfs/biodb/genomes/homo_sapiens/GRCh38_102/GRCh38.102.SIRV.gtf")
+
+  ref_anno <- ref_anno %>%
     as.data.frame() %>%
     filter(type == "transcript") %>%
     select(gene_id, gene_name, transcript_id, transcript_name) %>%
-    dplyr::rename(ref_gene_id = gene_id, ref_gene_name = gene_name, ref_transcript_name = transcript_name)
+    rename(ref_gene_id = gene_id, ref_gene_name = gene_name, ref_transcript_name = transcript_name)
 
-  gff_compare %<>% left_join(ref_anno, by = join_by(ref_gene_id, transcript_id))
+  gff_compare %<>% left_join(ref_anno)
   gff_compare %<>%
-    dplyr::rename(ref_transcript_id = transcript_id, transcript_id = qry_id, gene_id = qry_gene_id)
+    rename(ref_transcript_id = transcript_id, transcript_id = qry_id, gene_id = qry_gene_id)
 
   anno <- readRDS(file.path(base_path, "tx2gene.RDS")) %>%
-    select(-keep) %>%
-    mutate(ref_gene_id = NULL) %>%
-    left_join(gff_compare, by = join_by(transcript_id, gene_id))
+    select(-keep)
 
-  anno %<>% mutate(lr_support = transcript_id %in% lr_support$seqnames)
+  anno$ref_gene_id <- NULL
+  anno %<>%
+    left_join(gff_compare)
+
+  db[["anno"]] <- anno
 
   gtf <- left_join(gtf, anno, by = "transcript_id")
-
-  copy_to(
-    conn,
-    anno,
-    "anno",
-    overwrite = TRUE,
-    temporary = FALSE,
-    indexes = list(
-      "transcript_id",
-      "gene_name",
-      "gene_id",
-      "ref_transcript_id",
-      "ref_transcript_name",
-      "ref_gene_name"
-    )
-  )
+  db[["gtf"]] <- gtf
 
   dds <- readRDS(file.path(base_path, "gene_counts.RDS")) %>%
     DESeqDataSetFromTximport(
@@ -173,22 +117,14 @@ populate_db <- function() {
     ) %>%
     DESeq(.)
 
-  gene_counts <- counts(dds) %>%
+  gene_counts <- DESeq::counts(dds) %>%
     as_tibble(rownames = "gene_id") %>%
     tidyr::pivot_longer(-gene_id) %>%
     mutate(group = str_remove(name, "_[12345]")) %>%
     left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
     distinct()
 
-  # copy_to(conn,
-  #   gene_counts,
-  #   overwrite = TRUE,
-  #   temporary = FALSE,
-  #   indexes = list(
-  #     "gene_id",
-  #     "contrasts"
-  #   )
-  # )
+  db[["gene_counts"]] <- gene_counts
 
   tx_counts <- readRDS(file.path(base_path, "drimseq_data.RDS")) %>%
     DRIMSeq::counts() %>%
@@ -203,60 +139,7 @@ populate_db <- function() {
     left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
     distinct()
 
-  # copy_to(conn,
-  #   tx_counts,
-  #   "tx_counts",
-  #   overwrite = TRUE,
-  #   temporary = FALSE,
-  #   indexes = list(
-  #     "transcript_id",
-  #     "gene_id",
-  #     "contrasts"
-  #   )
-  # )
+  db[["tx_counts"]] <- tx_counts
 
-  gene_feat <- gtf %>%
-    filter(type == 'transcript') %>%
-    select(gene_id, transcript_id, color) %>%
-    mutate(PTC = color == "#FF0000") %>%
-    left_join(cds_source_choices, by = join_by(cds_source)) %>%
-    left_join(
-      anno,
-      by = join_by(gene_id, transcript_id)) %>%
-    left_join(
-      dge %>% select(padj, gene_id),
-      by = join_by(gene_id),
-      suffix = c('', '_dge')) %>%
-    left_join(
-      dte %>% select(padj, gene_id, transcript_id),
-      by = join_by(gene_id, transcript_id),
-      suffix = c('', '_dte')) %>%
-    group_by(gene_id) %>%
-    distinct() %>%
-    summarize(
-      ref_gene_name = first(ref_gene_name),
-      cds_source =  str_c(unique(cds_source), collapse = ';'),
-      any_lr_support = any(as.logical(lr_support)),
-      any_dge = any(!is.na(padj)),
-      any_dte = any(!is.na(padj_dte)),
-      any_ptc = any(PTC)
-    ) %>%
-    arrange(ref_gene_name)
-
-  # copy_to(conn,
-  #         gene_feat,
-  #         "gene_feat",
-  #         overwrite = TRUE,
-  #         temporary = FALSE,
-  #         indexes = list(
-  #           "ref_gene_name",
-  #           "gene_id"
-  #         )
-  # )
-  #
-
-
-  dbDisconnect(conn)
-
-
+  saveRDS(db, 'database.RDS')
 }
