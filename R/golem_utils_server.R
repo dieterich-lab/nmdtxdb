@@ -144,16 +144,6 @@ get_gene_info <- function(gene_id) {
 render_gene_card <- function(gene_id, conn) {
   parsed <- get_gene_info(gene_id)$content
 
-  # dge_l2fc <- tbl(conn, "dge") %>%
-  #   filter(gene_id == !!gene_id) %>%
-  #   collect() %>%
-  #   pull(log2FoldChange)
-  # is_nmd <- transcripts %>% with(table(transcript_biotype == "nonsense_mediated_decay"))
-  # n_transcripts <- nrow(transcripts)
-  # n_nmd <- ifelse(length(is_nmd) == 2, is_nmd[2], 0)
-  # has_support <- tbl(conn, "has_support") %>% collect()
-  # n_support <- length(intersect(transcripts$transcript_id, has_support$transcript_id))
-
   card(
     align = "left",
     div(
@@ -170,19 +160,6 @@ render_gene_card <- function(gene_id, conn) {
           str_interp("Also known as: ${paste(parsed$alias, collapse=', ')}")
         )
       ),
-      # div(str_glue("NMD isoforms: {n_nmd}/{sum(n_transcripts)}")),
-      # div(
-      #   str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
-      #   icon("question circle"),
-      # ) %>% tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
-      # p("Novel transcripts : X/XX"),
-      # div(
-      #   str_glue("Long read evidence: {n_support}/{n_transcripts}"),
-      #   icon("question circle"),
-      # ) %>% tagAppendAttributes(
-      #   .,
-      #   "data-tooltip" = "Isoforms with identical intron chain"
-      # ),
       div(
         "Ensembl:",
         a(
@@ -215,7 +192,6 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
     toast_tags = list(position = position, showIcon = icon)
   )
 }
-
 
 plot_annotation <- function(gtf) {
   gtf <- gtf %>%
