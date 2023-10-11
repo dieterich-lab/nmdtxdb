@@ -24,8 +24,7 @@ mod_gene_ui <- function(id) {
 mod_gene_server <- function(id, conn, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
     dge <- reactive({
-      conn %>%
-        tbl("dge") %>%
+        db[["dge"]] %>%
         filter(contrasts %in% !!contrast) %>%
         select(contrasts, log2FoldChange, padj, gene_name) %>%
         collect()
@@ -50,7 +49,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
       dge <- dge() %>%
         filter(gene_name == !!gene_name) %>%
         mutate(padj = padj %>% scales::scientific()) %>%
-        left_join(load_metadata(conn) %>% select(-contrast_label), by = "contrasts") %>%
+        left_join(load_metadata(db) %>% select(-contrast_label), by = "contrasts") %>%
         select(contrasts, padj, log2FoldChange, everything())
 
       reactable(

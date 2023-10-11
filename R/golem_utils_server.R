@@ -325,9 +325,8 @@ create_trackhub_url <- function(base_url = "http://genome-euro.ucsc.edu/", db = 
   )
 }
 
-load_metadata <- function(conn) {
-  conn %>%
-    tbl("metadata") %>%
+load_metadata <- function(db) {
+  db[['metadata']] %>%
     select(contrasts, Knockdown, Knockout, cellline) %>%
     filter(Knockdown != "LucKD") %>%
     distinct() %>%

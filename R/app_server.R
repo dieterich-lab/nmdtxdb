@@ -18,18 +18,15 @@ cds_source_choices <- data.frame(
 app_server <- function(input, output, session) {
   mod_intro_server("intro_1")
 
-  conn <- connect_db()
-
-  metadata <- load_metadata(conn)
-
-  gene_feat <- tbl(conn, "gene_feat") %>% collect()
-
+  db <- readRDS("database.RDS")
+  metadata <- load_metadata(db)
   gene_info <- reactiveVal()
+  message('running')
 
   updateSelectizeInput(
     session,
     "gene_select",
-    choices = gene_feat %>% filter(any_dge) %>% pull("ref_gene_name"),
+    choices = db$anno %>% pull("ref_gene_name") %>% unique() %>% sort(),
     server = TRUE,
     selected = "",
     options = list(
@@ -99,9 +96,8 @@ app_server <- function(input, output, session) {
   anno <- reactive({
     validate(need(input$gene_select, "Waiting selection"))
     send_toast(msg = "Loading selection.", class = "warning", session = session)
-    tbl(conn, "anno") %>%
-      dplyr::filter(ref_gene_name == !!input$gene_select) %>%
-      collect()
+    db[["anno"]] %>%
+      dplyr::filter(ref_gene_name == !!input$gene_select)
   })
 
   contrast <- eventReactive(input$contrast_select, {
@@ -123,11 +119,11 @@ app_server <- function(input, output, session) {
       gene_info(render_gene_card(ref_gene_id, conn))
 
       mod_gene_server(
-        "mod_gene1", conn, gene_name, contrast()
+        "mod_gene1", db, gene_name, contrast()
       )
 
       mod_transcript_server(
-        "mod_transcript1", conn, transcript_id, contrast(), cds_source()
+        "mod_transcript1", db, transcript_id, contrast(), cds_source()
       )
     }
   )

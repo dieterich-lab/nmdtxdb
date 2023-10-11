@@ -4,9 +4,6 @@
 #' @import stringr
 #' @import tidyr
 #' @import magrittr
-#' @importFrom DESeq2 counts
-#' @importFrom DRIMSeq counts
-#' @importFrom rtracklayer import
 #' @importFrom tibble deframe
 #' @importFrom tidyr fill
 populate_db <- function() {
@@ -75,7 +72,7 @@ populate_db <- function() {
   db[["dge"]] <- dge
 
   ## GTF ####
-  gtf <- import(file.path(base_path, "gtf_annotated.gtf"))
+  gtf <- rtracklayer::import(file.path(base_path, "gtf_annotated.gtf"))
   gtf <- as.data.frame(gtf)
   gtf$transcript_id <- gsub(x = gtf$transcript_id, "\\_.*", "")
 
