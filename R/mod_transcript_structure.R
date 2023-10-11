@@ -32,7 +32,6 @@ mod_transcript_structure_ui <- function(id) {
 
 #' phase1 Server Functions
 #' @import dplyr
-#' @importFrom crosstalk SharedData
 #' @importFrom reactable reactableOutput getReactableState
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_split

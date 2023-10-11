@@ -7,12 +7,9 @@ Description: PKG_DESC.
 License: MIT + file LICENSE
 Imports: 
     config (>= 0.3.1),
-    crosstalk,
-    DBI,
     dplyr,
     forcats,
     ggplot2,
-    ggridges,
     ggtranscript,
     golem (>= 0.3.3),
     htmltools,
@@ -26,7 +23,6 @@ Imports:
     purrr,
     reactable,
     reshape2,
-    RPostgres,
     scales,
     shiny (>= 1.7.2),
     shiny.semantic,
