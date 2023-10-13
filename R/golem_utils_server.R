@@ -86,8 +86,6 @@ col_5 <- function(...) {
 }
 
 
-
-
 bigwig <- list(
   control1 = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-1.bigWig",
   SMG6kd_SMG7ko = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-14.bigWig"
@@ -193,40 +191,41 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
   )
 }
 
-plot_annotation <- function(gtf) {
-  gtf <- gtf %>%
-    mutate(name = paste0(transcript_name, " ", transcript_biotype))
+plot_annotation_cdna <- function(bed12){
+    exon <- unlist(bed12$c_blocks) %>% as.data.frame()
+    cds <- bed12$c_thick %>% as.data.frame()
+    text <- exon %>%
+      group_by(names) %>%
+      mutate(
+        eid = 1:n(),
+        x = (start + end)/2 )
 
-  exons <- gtf %>% dplyr::filter(type == "exon")
-  cds <- gtf %>% dplyr::filter(type == "CDS")
-  introns <- ggtranscript::to_intron(exons, group_var = "transcript_id")
-
-  p1 <- exons %>%
-    ggplot(aes(
-      xstart = start,
-      xend = end,
-      y = name
-    )) +
-    ggtranscript::geom_range(
-      aes(
-        height = 0.25
+    exon %>%
+      ggplot(aes(
+        xstart = start,
+        xend = end,
+        y = names
+      )) +
+      geom_range(
+        fill = "white",
+        height = 0.25) +
+      geom_range(
+        data = cds,
+        height = 0.40,
+        alpha = .80
+      ) +
+      geom_text(
+        data = text,
+        size = 3,
+        aes(label = eid, x = x)) +
+      ylab('') +
+      theme_minimal() +
+      labs(y = "") +
+      theme(
+        axis.ticks = element_blank(),
+        legend.position = c(0.87, 0.75)
       )
-    ) +
-    ggtranscript::geom_range(
-      data = cds
-    ) +
-    ggtranscript::geom_intron(
-      data = introns,
-      aes(strand = strand)
-    ) +
-    theme_minimal() +
-    labs(y = "") +
-    theme(
-      axis.ticks = element_blank(),
-      legend.position = c(0.87, 0.75)
-    )
 }
-
 
 
 #' Simplifies grid creation
