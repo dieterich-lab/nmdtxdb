@@ -217,14 +217,7 @@ plot_annotation_cdna <- function(bed12){
       geom_text(
         data = text,
         size = 3,
-        aes(label = eid, x = x)) +
-      ylab('') +
-      theme_minimal() +
-      labs(y = "") +
-      theme(
-        axis.ticks = element_blank(),
-        legend.position = c(0.87, 0.75)
-      )
+        aes(label = eid, x = x))
 }
 
 
