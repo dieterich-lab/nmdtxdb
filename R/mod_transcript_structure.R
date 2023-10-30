@@ -40,9 +40,9 @@ mod_transcript_structure_ui <- function(id) {
 #' @import ggplot2
 #' @import stringr
 #' @noRd
-mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds, metadata) {
+mod_transcript_structure_server <- function(id, db, g_id, t_id, contrast, cds, metadata) {
   moduleServer(id, function(input, output, session) {
-    anno <- tbl(conn, "anno") %>% collect()
+    anno <- db$anno
 
     template <- paste(
       "<b>%{text}</b><br>",
@@ -51,7 +51,7 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds,
       "<extra></extra>"
     )
 
-    data_dge <- tbl(conn, "dge") %>%
+    data_dge <- db$dge %>%
       select(-c(baseMean, lfcSE, stat, pvalue, gene_name)) %>%
       filter(
         # gene_id %in% gtf_gene_id,
@@ -64,7 +64,7 @@ mod_transcript_structure_server <- function(id, conn, g_id, t_id, contrast, cds,
       left_join(anno %>% select(gene_id, ref_gene_name), by = join_by(gene_id)) %>%
       distinct()
 
-    data_dte <- tbl(conn, "dte") %>%
+    data_dte <- db$dte %>%
       select(-c(exonBaseMean, dispersion, stat, pvalue)) %>%
       rename(log2FoldChange = log2fold) %>%
       filter(

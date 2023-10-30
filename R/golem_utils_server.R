@@ -86,11 +86,6 @@ col_5 <- function(...) {
 }
 
 
-bigwig <- list(
-  control1 = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-1.bigWig",
-  SMG6kd_SMG7ko = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-14.bigWig"
-)
-
 log10_or_max <- function(x) {
   log10x <- log10(x)
   log10x[log10x <= -Inf] <- min(log10x[is.finite(log10x)])
@@ -139,7 +134,7 @@ get_gene_info <- function(gene_id) {
 #' @importFrom htmltools tagAppendAttributes
 #' @importFrom stringr str_interp str_glue
 #' @note remove db calls and test
-render_gene_card <- function(gene_id, conn) {
+render_gene_card <- function(gene_id) {
   parsed <- get_gene_info(gene_id)$content
 
   card(

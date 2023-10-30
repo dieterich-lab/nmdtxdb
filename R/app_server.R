@@ -16,12 +16,12 @@ cds_source_choices <- data.frame(
 #' @import dplyr
 #' @noRd
 app_server <- function(input, output, session) {
-  mod_intro_server("intro_1")
 
-  db <- readRDS("database.RDS")
   metadata <- load_metadata(db)
   gene_info <- reactiveVal()
   message('running')
+
+  mod_intro_server("intro_1")
 
   updateSelectizeInput(
     session,
@@ -58,7 +58,7 @@ app_server <- function(input, output, session) {
   )
 
   observeEvent(input$gene_select, {
-    cds_choices <- gene_feat %>%
+    cds_choices <- db$gene_feat %>%
       filter(ref_gene_name == input$gene_select) %>%
       select(cds_source) %>%
       separate_rows(., cds_source, sep = ";") %>%
@@ -116,7 +116,7 @@ app_server <- function(input, output, session) {
       ref_gene_id <- anno()[[1, "ref_gene_id"]]
       gene_name <- anno()[[1, "ref_gene_name"]]
       transcript_id <- anno()[["transcript_id"]]
-      gene_info(render_gene_card(ref_gene_id, conn))
+      gene_info(render_gene_card(ref_gene_id))
 
       mod_gene_server(
         "mod_gene1", db, gene_name, contrast()

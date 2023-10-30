@@ -21,7 +21,7 @@ mod_gene_ui <- function(id) {
 #' @import reactable
 #' @import stringr
 #' @noRd
-mod_gene_server <- function(id, conn, gene_name, contrast) {
+mod_gene_server <- function(id, db, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
     dge <- reactive({
         db[["dge"]] %>%

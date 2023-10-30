@@ -51,15 +51,15 @@ mod_transcript_ui <- function(id) {
 #' @importFrom ggplot2 element_text element_blank
 #'
 #' @examples
-# df <- data.frame(
-#   cds_id = c("id1", "id2", "id3"),
-#   cds_source2 = c("source1", "source2", "source1"),
-#   label = c("label1", "label2", "label3"),
-#   padj = c(0.05, 0.01, 0.001),
-#   log2fold = c(2, -1, 3)
-# )
-# y_labs <- c("id1", "id3")
-# build_dotplot(df, y_labs)
+#' df <- data.frame(
+#'   cds_id = c("id1", "id2", "id3"),
+#'   cds_source2 = c("source1", "source2", "source1"),
+#'   label = c("label1", "label2", "label3"),
+#'   padj = c(0.05, 0.01, 0.001),
+#'   log2fold = c(2, -1, 3)
+#' )
+#' y_labs <- c("id1", "id3")
+#' build_dotplot(df, y_labs)
 #'
 build_dotplot <- function(df, y_labs) {
   df <- df %>%
@@ -175,7 +175,7 @@ build_transcript_plot <- function(gtf) {
 #' @import stringr
 #' @importFrom scales scientific
 #' @noRd
-mod_transcript_server <- function(id, conn, tx, contrast, cds) {
+mod_transcript_server <- function(id, db, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     l2fc <- db[["dte"]] %>%
       filter(contrasts %in% !!contrast)
