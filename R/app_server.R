@@ -17,11 +17,10 @@ cds_source_choices <- data.frame(
 #' @noRd
 app_server <- function(input, output, session) {
 
+  mod_intro_server("intro_1")
   metadata <- load_metadata(db)
   gene_info <- reactiveVal()
   message('running')
-
-  mod_intro_server("intro_1")
 
   updateSelectizeInput(
     session,

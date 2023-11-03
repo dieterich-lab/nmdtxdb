@@ -1,3 +1,44 @@
+library(rtracklayer)
+library(plyranges)
+
+resolve_CDS_from_GTF <- function(gtf_file, cds_bed_file) {
+  gtf_data <- import(gtf_file)
+
+  # Filter for 'exon' type and select transcript IDs
+  exon_list <- gtf_data %>%
+    filter(type == 'exon') %>%
+    select(transcript_id) %>%
+    split(., ~transcript_id)
+
+  # Convert to BED format
+  bed_data <- asBED(exon_list)
+
+  # Import the CDS BED file, and extend the CDS start with the score column
+  cds_data <- import(cds_bed_file)
+  cds_data <- IRanges(start = start(cds_data), width = score(cds_data), name = seqnames(cds_data))
+
+  # Use names to match CDS and transcript, set nomatch to empty range
+  cds_data <- c(cds_data, IRanges(start = 1, width = 0))
+  bed_data$c_thick <- cds_data[match(bed_data$name, names(cds_data), nomatch = length(cds_data))]
+  # drop nomatch
+  bed_data <- bed_data[width(bed_data$c_thick) > 0]
+
+  # Map to genomic positions
+  bed_data$g_thick <- GenomicFeatures::pmapFromTranscripts(bed_data$c_thick, exon_list[bed_data$name])
+  bed_data$g_thick <- range(bed_data$g_thick) %>% unlist(use.names = FALSE) %>% ranges()
+  bed_data$c_blocks <- bed_data$blocks
+
+  # Handle negative strand
+  neg_idx <- which(strand(bed_data) == "-")
+  bed_data$c_blocks <- revElements(bed_data$c_blocks, neg_idx)
+  bed_data$c_blocks <- endoapply(
+    bed_data$c_blocks,
+    \(.x) IRanges(end = cumsum(width(.x)), width = width(.x))
+    )
+
+  return(bed_data)
+}
+
 #' Updated db
 #'
 #' @import dplyr
