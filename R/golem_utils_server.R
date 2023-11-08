@@ -186,33 +186,49 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
   )
 }
 
-plot_annotation_cdna <- function(bed12){
-    exon <- unlist(bed12$c_blocks) %>% as.data.frame()
-    cds <- bed12$c_thick %>% as.data.frame()
-    text <- exon %>%
-      group_by(names) %>%
-      mutate(
-        eid = 1:n(),
-        x = (start + end)/2 )
+plot_annotation_cdna <- function(bed12) {
+  feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
+  exon <- bed12 %>% dplyr::pull(cdna_blocks)
+  names(exon) <- bed12$name
+  exon <- exon %>% dplyr::bind_rows(.id = "name")
+  cds <- bed12$cdna_thick %>%
+    dplyr::bind_rows() %>%
+    group_by(names) %>%
+    summarize(start = min(start), end = max(end)) %>%
+    dplyr::rename(name = names) %>%
+    mutate(is_ptc = bed12$is_ptc)
+  text <- exon %>%
+    group_by(name) %>%
+    mutate(eid = 1: n(), x = (start + end) / 2)
 
-    exon %>%
-      ggplot(aes(
-        xstart = start,
-        xend = end,
-        y = names
-      )) +
-      geom_range(
-        fill = "white",
-        height = 0.25) +
-      geom_range(
-        data = cds,
-        height = 0.40,
-        alpha = .80
-      ) +
-      geom_text(
-        data = text,
-        size = 3,
-        aes(label = eid, x = x))
+  exon %>%
+    ggplot(aes(
+      xstart = start,
+      xend = end,
+      y = name
+    )) +
+    geom_range(
+      fill = "white",
+      height = 0.25
+    ) +
+    geom_range(
+      data = cds,
+      height = 0.40,
+      alpha = .50,
+      aes(
+        fill = is_ptc
+      )
+    ) +
+    scale_fill_manual(values = feat_colors) +
+    geom_text(
+      data = text,
+      size = 3,
+      vjust = 1.5,
+      aes(label = eid, x = x)
+    ) +
+    labs(fill = "PTC:") +
+    theme_linedraw() +
+    labs(y = "", x = "")
 }
 
 
@@ -289,7 +305,7 @@ create_trackhub_url <- function(base_url = "http://genome-euro.ucsc.edu/", db = 
 }
 
 load_metadata <- function(db) {
-  db[['metadata']] %>%
+  db[["metadata"]] %>%
     select(contrasts, Knockdown, Knockout, cellline) %>%
     filter(Knockdown != "LucKD") %>%
     distinct() %>%

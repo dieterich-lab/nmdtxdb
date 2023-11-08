@@ -90,11 +90,6 @@ app_ui <- function(request) {
                 content = mod_transcript_ui("mod_transcript1"),
                 id = "transcript_view_tab"
               )
-              # list(
-              #   menu = "Advanced view",
-              #   content = mod_transcript_structure_ui("mod_transcript_structure"),
-              #   id = "advanced_tab"
-              # )
             ),
             active = "second_tab",
             id = "transcript_tabset"
