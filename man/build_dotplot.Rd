@@ -17,3 +17,15 @@ A GGPlot object.
 \description{
 This function takes a dataframe and a vector of \code{cds_id} values, and creates a customized GGPlot using ggplot2.
 }
+\examples{
+df <- data.frame(
+  cds_id = c("id1", "id2", "id3"),
+  source = c("source1", "source2", "source1"),
+  label = c("label1", "label2", "label3"),
+  padj = c(0.05, 0.01, 0.001),
+  log2fold = c(2, -1, 3)
+)
+y_labs <- c("id1", "id3")
+build_dotplot(df, y_labs)
+
+}

@@ -1,25 +1,31 @@
-- transcript name for novel should get a extra id
-- DTE on database
-- render_gene_card
-  - DGE
-  - has_support
-  - n_nmd
-- add gene_exp to each row of reactable so everything is aligned
-- transcript_name for 7SK all wrong on anno table
-- CDS source picker 
-
-?Warning: `bindFillRole()` only works on htmltools::tag() objects (e.g., div(), p(), etc.), not objects of type 'shiny.tag.list'.
 
 
-docker cache setup
-RENV_PATHS_CACHE_HOST=/opt/local/renv/cache
+Replace https://mygene.info golem_utils_server.R line 98 by the gene description below:
 
-# where the cache should be mounted in the container
-RENV_PATHS_CACHE_CONTAINER=/renv/cache
+library(dplyr)
+library(biomaRt)
 
-# run the container with the host cache mounted in the container
-docker run --rm \
-    -e "RENV_PATHS_CACHE=${RENV_PATHS_CACHE_CONTAINER}" \
-    -v "${RENV_PATHS_CACHE_HOST}:${RENV_PATHS_CACHE_CONTAINER}" \
-    -p 14618:14618 \
-    R -s -e 'renv::restore(); shiny::runApp(host = "0.0.0.0", port = 14618)'
+mart <- useMart('ENSEMBL_MART_ENSEMBL')
+mart <- useDataset('hsapiens_gene_ensembl', mart)
+
+gff_compare <- read.table(
+  file.path("phaseFinal/stringtie_merge/fix_comp_ref.merged_each.fix.gtf.tmap"),
+  header = 1
+)  %>% 
+  select(ref_gene_id) %>% 
+  distinct()
+  
+annotLookup <- getBM(
+  mart = mart,
+  attributes = c(
+    'ensembl_gene_id',
+    'gene_biotype',
+    'external_gene_name',
+    'description'),
+  filters = 'ensembl_gene_id',
+  values = gff_compare$ref_gene_id,
+  uniqueRows=TRUE)
+
+annotLookup <- annotLookup %>% 
+  mutate(description = stringr::str_remove(description, " \\[[^.]*$"))
+saveRDS(annotLookup, 'phaseFinal/data/gene_description.RDS')

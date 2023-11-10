@@ -150,37 +150,15 @@ populate_db <- function() {
   gtf <- left_join(gtf, anno, by = "transcript_id")
   db[["gtf"]] <- gtf
 
-  dds <- readRDS(file.path(base_path, "gene_counts.RDS")) %>%
-    DESeqDataSetFromTximport(
-      txi = .,
-      colData = metadata |> select("group"),
-      design = ~group
-    ) %>%
-    DESeq(.)
+  # from_start <- readRDS('from_start.RDS')
+  #
+  # db[["bed12"]][1, 'blocks'] %>% unname() %>%  as.data.frame()
+  # db[["bed12"]] <- as.data.frame("bed12")
+  # db[["bed12"]][1, 'blocks'] %>% unname() %>%  as.data.frame()
+  # db[["bed12"]][1, 'thick'] %>% unname() %>%  as.data.frame()
+  # db[["bed12"]][1, 'cdna_thick'] %>% unname() %>% as.data.frame()
 
-  gene_counts <- DESeq::counts(dds) %>%
-    as_tibble(rownames = "gene_id") %>%
-    tidyr::pivot_longer(-gene_id) %>%
-    mutate(group = str_remove(name, "_[12345]")) %>%
-    left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
-    distinct()
-
-  db[["gene_counts"]] <- gene_counts
-
-  tx_counts <- readRDS(file.path(base_path, "drimseq_data.RDS")) %>%
-    DRIMSeq::counts() %>%
-    dplyr::rename(transcript_id = feature_id) %>%
-    tidyr::pivot_longer(-c(transcript_id, gene_id)) %>%
-    mutate(group = str_replace_all(name, "[.]", "-") %>% str_remove(., "_[12345]")) %>%
-    group_by(gene_id, group) %>%
-    mutate(total = sum(value, na.rm = TRUE)) %>%
-    filter(total != 0) %>%
-    ungroup() %>%
-    mutate(usage = value / total) %>%
-    left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
-    distinct()
-
-  db[["tx_counts"]] <- tx_counts
 
   saveRDS(db, 'database.RDS')
 }
+#
