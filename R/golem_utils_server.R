@@ -186,17 +186,25 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
   )
 }
 
+#' Plot a transcript on the cDNA coordiantes highlighting PTC containing
+#' transcripts
+#' @import dplyr ggtranscript
+#'
 plot_annotation_cdna <- function(bed12) {
   feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
   exon <- bed12 %>% dplyr::pull(cdna_blocks)
   names(exon) <- bed12$name
   exon <- exon %>% dplyr::bind_rows(.id = "name")
+
   cds <- bed12$cdna_thick %>%
     dplyr::bind_rows() %>%
     group_by(names) %>%
     summarize(start = min(start), end = max(end)) %>%
+    ungroup() %>%
     dplyr::rename(name = names) %>%
-    mutate(is_ptc = bed12$is_ptc)
+    left_join(bed12 %>% select(name, is_ptc), by = 'name' )
+
+
   text <- exon %>%
     group_by(name) %>%
     mutate(eid = 1: n(), x = (start + end) / 2)
