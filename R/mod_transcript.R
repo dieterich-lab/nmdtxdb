@@ -163,7 +163,7 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
         log2fold = round(log2fold, 2),
         padj = padj %>% scientific()
       ) %>%
-      select(-c(seqnames, start, end, width, strand, ptc, cdna_thick, cdna_blocks)) %>%
+      select(-c(seqnames, start, end, width, strand, cdna_thick, cdna_blocks)) %>%
       distinct(transcript_id, contrasts, .keep_all = TRUE)
 
     output$table_transcript <- renderReactable({
