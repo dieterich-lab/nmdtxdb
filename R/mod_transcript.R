@@ -88,7 +88,7 @@ build_dotplot <- function(df, y_labs) {
     labs(y = "", x = "") +
     facet_grid(source ~ label, scales = "free") +
     scale_color_gradient2(
-      low = "black", mid = "lightyellow", high = "firebrick",
+      low = "blue", mid = "lightyellow", high = "red",
       oob = scales::squish, limits = c(-5, 5)
     ) +
     theme(
@@ -105,81 +105,6 @@ build_dotplot <- function(df, y_labs) {
     )
 }
 
-
-#' Create Transcript Plot
-#'
-#' This function takes a dataframe containing GTF information and creates a
-#' customized transcript plot using ggplot2.
-#'
-#' @param gtf A dataframe containing GTF information.
-#'
-#' @return A GGPlot object.
-#'
-#' @import ggplot2
-#' @importFrom ggplot2 labs scale_fill_manual facet_wrap theme_linedraw
-#' @importFrom ggtranscript geom_range geom_intron
-#' @importFrom grid arrow unit
-#' @importFrom ggplot2 element_text element_blank
-#'
-#'
-#' @examples
-#' gtf <- data.frame(
-#'   type = c("exon", "CDS", "exon", "exon", "CDS", "exon"),
-#'   start = c(100, 150, 200, 250, 300, 350),
-#'   end = c(130, 170, 220, 260, 310, 360),
-#'   Name = c("transcript1", "transcript1", "transcript2", "transcript3", "transcript2", "transcript4"),
-#'   cds_source2 = c("source1", "source1", "source2", "source2", "source3", "source3"),
-#'   PTC = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
-#'   strand = c("+", "-", "+", "+", "-", "+")
-#' )
-#' build_transcript_plot(gtf)
-#'
-build_transcript_plot <- function(gtf) {
-  if (nrow(gtf) < 1) {
-    return("No CDS source to show.")
-  }
-
-  exons <- gtf %>% filter(type == "exon")
-  cds <- gtf %>% filter(type == "CDS")
-  introns <- to_intron(exons, group_var = "Name")
-  feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
-
-  exons %>%
-    ggplot(aes(
-      xstart = start,
-      xend = end,
-      y = Name
-    )) +
-    geom_range(
-      aes(
-        fill = PTC,
-        height = 0.25
-      )
-    ) +
-    geom_range(
-      data = cds,
-      aes(
-        fill = PTC
-      )
-    ) +
-    geom_intron(
-      data = introns,
-      aes(strand = strand),
-      arrow = grid::arrow(ends = "last", length = grid::unit(0.4, "lines")),
-    ) +
-    scale_fill_manual(values = feat_colors) +
-    labs(fill = "PTC:") +
-    facet_wrap(~cds_source2, ncol = 1, scales = "free_y", strip.position = "left") +
-    theme_linedraw() +
-    labs(y = "") +
-    theme(
-      text = element_text(size = 10),
-      plot.margin = margin(0, 0, 0, 0, "pt"),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.position = "top"
-    )
-}
 
 #' transcript view Server Functions
 #' @import dplyr
@@ -246,7 +171,6 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
         df %>% select(transcript_id, ref_transcript_name, cds_position, contrasts, everything()),
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
-        bordered = TRUE,
         highlight = TRUE,
         wrap = FALSE,
         details = function(index) {
@@ -465,13 +389,12 @@ function(cellInfo) {
             legend.box = "vertical",
             legend.position = "left",
             legend.margin = margin(),
-            legend.box.margin = margin(6, 6, 6, 6),
             legend.text = element_text(size = 6),
             legend.title = ggplot2::element_text(size = 6, face = "bold"),
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
             legend.key.height = unit(0.8, "line"),
-            panel.spacing.x = unit(0.1, "cm"),
+            # panel.spacing.x = unit(0.1, "cm"),
             panel.spacing.y = unit(0.1, "cm")
           )
         ggsave(fname)
