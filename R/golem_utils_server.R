@@ -342,7 +342,7 @@ load_metadata <- function(db) {
         "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout} <i>clone</i>: {clone}"
       ),
       label = str_c(Knockdown, Knockout, cellline, clone,  sep = "_")
-    ) %>% View()
+    )
 }
 
 with_tooltip <- function(value, tooltip) {

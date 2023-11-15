@@ -27,9 +27,6 @@ app_server <- function(input, output, session) {
     choices = db$anno %>% pull("ref_gene_name") %>% unique() %>% sort(),
     server = TRUE,
     selected = "SRSF2"
-    # options = list(
-    #   onFocus = I("function() { this.clear(); }")
-    #   )
   )
 
   updateSelectizeInput(
@@ -94,11 +91,11 @@ app_server <- function(input, output, session) {
 
   contrast <- eventReactive(input$contrast_select, {
     input$contrast_select
-  })
+  }) %>% debounce(1500)
 
   cds_source <- eventReactive(input$cds_source_select, {
     input$cds_source_select
-  })
+  }) %>% debounce(1500)
 
   observeEvent(
     c(anno(), contrast(), cds_source()),
