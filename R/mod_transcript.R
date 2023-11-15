@@ -63,41 +63,37 @@ mod_transcript_ui <- function(id) {
 #'
 build_dotplot <- function(df, y_labs) {
   df <- df %>%
-    select(transcript_id, source, label, padj, log2fold) %>%
-    filter(transcript_id %in% y_labs) %>%
-    mutate(
-      transcript_id = factor(
-        transcript_id,
-        levels = y_labs
-      ),
-      label = str_replace_all(label, "_", "\n")
-    )
+    select(cds_id, label, padj, log2fold) %>%
+    filter(cds_id %in% y_labs) %>%
+    mutate(label = str_replace_all(label, '_', '\n'))
+
 
   ggplot(
     df,
     aes(
       x = label,
-      y = transcript_id,
+      y = cds_id,
       size = -log10(as.numeric(padj) + 1e-20),
       color = log2fold
     )
   ) +
-    labs(color = "log2fold: ", size = "-log10(padj):") +
+    labs(color = "log2fold: ", size = "-log10(padj): ") +
     geom_point() +
     theme_linedraw() +
     labs(y = "", x = "") +
-    facet_grid(source ~ label, scales = "free") +
+    # facet_grid( ~ label, scales = "free") +
+    scale_x_discrete(limits=na.omit(unique(df$label))) +
     scale_color_gradient2(
       low = "blue", mid = "lightyellow", high = "red",
       oob = scales::squish, limits = c(-5, 5)
     ) +
     theme(
-      text = element_text(size = 10),
+      text = element_text(size = 12),
       axis.text.y = element_blank(),
       axis.ticks.length.y = unit(0, "pt"),
       axis.ticks.y = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 6),
+      # axis.ticks.x = element_blank(),
       strip.background.y = element_blank(),
       strip.text.y = element_blank(),
       strip.text.x = element_text(size = 5),
@@ -120,10 +116,9 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
       filter(contrasts %in% !!contrast)
 
     transcripts <- db[["bed12"]] %>%
-      filter(name %in% !!tx) %>% # TODO cds_source %in% !!cds
-      # TODO:  cds_source, color
+      filter(name %in% !!tx, source %in% !!cds) %>%
       mutate(
-        # TODO PTC = color == "#FF0000",
+        cds_id = .$cdna_thick$name,
         position = glue::glue("chr{seqnames}:{start}-{end}"),
         cds_position = glue::glue("chr{seqnames}:{thick}"),
         trackhub_url = purrr::map(
@@ -149,8 +144,8 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
       filter(transcript_id %in% !!tx) %>%
       select(
         ref_gene_name, transcript_id, ref_transcript_name,
-        ref_transcript_id
-      ) # TODO: lr_support, class_code
+        ref_transcript_id, lr_support, match
+      )
 
     fname <- file.path(tempdir(), paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
@@ -214,13 +209,13 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
             cell = JS("
 function (cellInfo) {
   const cds_source = cellInfo.row['source'];
-  const cds_position = cellInfo.row['cds_position'];
+  const cds_id = cellInfo.row['cds_id'];
   const cds_trackhub_url = cellInfo.row['cds_trackhub_url'];
 
-  if (cds_position === null) {
+  if (cds_id === null) {
     return 'No CDS';
   } else {
-    return `<div><a href='${cds_trackhub_url}' target='_blank'>${cds_position}</a></div><div><small><i>Source</i>: ${cds_source}</small></div>`;
+    return `<div><a href='${cds_trackhub_url}' target='_blank'>${cds_id}</a></div><div><small><i>Source</i>: ${cds_source}</small></div>`;
   }
 }")
 ),
@@ -282,7 +277,7 @@ function (cellInfo) {
             html = TRUE,
             cell = JS("
 function(cellInfo) {
-  const cc = cellInfo.row['class_code'];
+  const cc = cellInfo.row['match'];
   const ti = cellInfo.row['ref_transcript_id'];
   const lab1 = '<div>' + '<strong>' + cellInfo.value + '</strong> </div>'
   const lab2 = '<div><small><i>Match</i>: ' + cc + '</small></div>';
@@ -340,6 +335,9 @@ function(cellInfo) {
           cds_trackhub_url = colDef(
             show = FALSE
           ),
+          cds_id = colDef(
+            show = FALSE
+          ),
           Knockout = colDef(
             show = FALSE
           ),
@@ -355,7 +353,7 @@ function(cellInfo) {
           thick = colDef(
             show = FALSE
           ),
-          class_code = colDef(
+          match = colDef(
             show = FALSE
           ),
           ref_gene_name = colDef(
@@ -365,6 +363,12 @@ function(cellInfo) {
             show = FALSE
           ),
           ref_transcript_id = colDef(
+            show = FALSE
+          ),
+          ptc = colDef(
+            show = FALSE
+          ),
+          itemRgb = colDef(
             show = FALSE
           ),
           position = colDef(
@@ -381,7 +385,8 @@ function(cellInfo) {
           \(x) x$y$get_labels()
         ) |>
           unlist()
-        validate(need(length(y_labs) < 8, "Too many transcript, download plot instead."))
+        validate(need(length(y_labs) < 10,
+                      "Too many transcripts, download plot instead."))
         p2 <- build_dotplot(df, y_labs)
         p_final <- p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
@@ -394,7 +399,6 @@ function(cellInfo) {
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
             legend.key.height = unit(0.8, "line"),
-            # panel.spacing.x = unit(0.1, "cm"),
             panel.spacing.y = unit(0.1, "cm")
           )
         ggsave(fname)

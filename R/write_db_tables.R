@@ -147,16 +147,45 @@ populate_db <- function() {
 
   db[["anno"]] <- anno
 
+get_ref_match <- function(file){
+    ref_match <- read.table(file,
+      col.names = c("query_id", "locus_id", "ref", "class_code", "sample_info"))
+    ref_match$transcript_id <- str_split(ref_match$sample_info, "\\|", simplify = TRUE)
+    ref_match$transcript_id  <- ref_match$transcript_id[, 2]
+    ref_match <- ref_match %>%
+      mutate(class_code = case_when(
+        class_code == '=' ~ 'same_intron_chain',
+        class_code == 'n' ~ 'IR',
+        class_code %in% c('c', 'j', 'k') ~ 'splicing_variants',
+        TRUE ~ 'other'
+      ))
+
+    ref_match %>% dplyr::select(transcript_id, class_code) %>% tibble::deframe()
+  }
+  ref_match <- get_ref_match("/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/compared/fix_comp_ref.tracking")
+  db$anno$match <- ref_match[db$anno$transcript_id]
+
+  lr_support <- readRDS('/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/lr_support.RDS')
+  db$anno$lr_support <- db$anno$transcript_id %in% lr_support$seqnames
+
   gtf <- left_join(gtf, anno, by = "transcript_id")
   db[["gtf"]] <- gtf
 
-  # from_start <- readRDS('from_start.RDS')
-  #
-  # db[["bed12"]][1, 'blocks'] %>% unname() %>%  as.data.frame()
-  # db[["bed12"]] <- as.data.frame("bed12")
-  # db[["bed12"]][1, 'blocks'] %>% unname() %>%  as.data.frame()
-  # db[["bed12"]][1, 'thick'] %>% unname() %>%  as.data.frame()
-  # db[["bed12"]][1, 'cdna_thick'] %>% unname() %>% as.data.frame()
+  bed12 <- readRDS('longorf_bed12.RDS')
+  bed12$cdna_thick <- data.frame(
+    start = bed12$cdna_thick.start,
+    end = bed12$cdna_thick.end)
+  bed12[c("cdna_thick.start", "cdna_thick.end", "cdna_thick.width")] <- NULL
+
+  bed12$cdna_thick$names <- make_unique(bed12$name)
+  db$bed12 <- bed12
+
+  tmp <- db$bed12 %>%
+    select(name, source) %>%
+    group_by(name) %>%
+    summarise(source = list(unique(source)))
+
+  db$anno <- db$anno %>% left_join(tmp, by=c('transcript_id' = 'name'))
 
 
   saveRDS(db, 'database.RDS')

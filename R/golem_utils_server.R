@@ -192,28 +192,27 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
 #'
 plot_annotation_cdna <- function(bed12) {
   feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
-  exon <- bed12 %>% dplyr::pull(cdna_blocks)
-  names(exon) <- bed12$name
-  exon <- exon %>% dplyr::bind_rows(.id = "name")
+  exon <- bed12$cdna_blocks
+  names(exon) <- bed12$cdna_thick$name
+  exon <- exon %>% dplyr::bind_rows(.id = "cds_id")
 
   cds <- bed12$cdna_thick %>%
     dplyr::bind_rows() %>%
     group_by(names) %>%
     summarize(start = min(start), end = max(end)) %>%
     ungroup() %>%
-    dplyr::rename(name = names) %>%
-    left_join(bed12 %>% select(name, is_ptc), by = 'name' )
-
+    dplyr::rename(cds_id=names) %>%
+    left_join(bed12 %>% select(cds_id, is_ptc), by = 'cds_id')
 
   text <- exon %>%
-    group_by(name) %>%
+    group_by(cds_id) %>%
     mutate(eid = 1: n(), x = (start + end) / 2)
 
   exon %>%
     ggplot(aes(
       xstart = start,
       xend = end,
-      y = name
+      y = cds_id
     )) +
     geom_range(
       fill = "white",
@@ -278,6 +277,23 @@ position_from_gtf <- function(gtf) {
   gtf %>%
     mutate(chr = ifelse(str_detect(seqnames, "chr"), "", "chr")) %>%
     str_glue_data("{chr}{seqnames}:{start}-{end}")
+}
+
+
+#' Make Unique Character Vectors with Suffixes
+#'
+#' Takes a character vector and makes each element unique by appending an increment
+#'
+#' @param strings A character vector with potentially non-unique elements.
+#' @return A character vector where each element has been made unique by appending
+#' an underscore and an occurrence number.
+#' @examples
+#' original_vector <- c("apple", "banana", "apple", "orange", "banana", "banana")
+#' make_unique(original_vector)
+#' @export
+make_unique <- function(strings) {
+  counts <- ave(strings, strings, FUN = seq_along)
+  return(paste0(strings, "_", counts))
 }
 
 

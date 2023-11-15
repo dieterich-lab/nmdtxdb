@@ -20,17 +20,16 @@ app_server <- function(input, output, session) {
   mod_intro_server("intro_1")
   metadata <- load_metadata(db)
   gene_info <- reactiveVal()
-  message('running')
 
   updateSelectizeInput(
     session,
     "gene_select",
     choices = db$anno %>% pull("ref_gene_name") %>% unique() %>% sort(),
     server = TRUE,
-    selected = "",
-    options = list(
-      onFocus = I("function() { this.clear(); }")
-      )
+    selected = "SRSF2"
+    # options = list(
+    #   onFocus = I("function() { this.clear(); }")
+    #   )
   )
 
   updateSelectizeInput(
@@ -57,29 +56,21 @@ app_server <- function(input, output, session) {
   )
 
   observeEvent(input$gene_select, {
-    cds_choices <- db$gene_feat %>%
+
+    cds_choices <- db$anno %>%
       filter(ref_gene_name == input$gene_select) %>%
-      select(cds_source) %>%
-      separate_rows(., cds_source, sep = ";") %>%
-      left_join(cds_source_choices, by = "cds_source") %>%
-      rename(label = cds_source2) %>%
-      mutate(
-        cds_source = as.factor(cds_source),
-        levels(cds_source_choices$cds_source)
-      ) %>%
-      arrange(cds_source) %>%
-      mutate(cds_source = as.character(cds_source))
+      pull(source) %>%
+      Reduce(x=., union) %>%
+      factor(., levels=c('canonical', 'ensembl', 'riboseq', 'openprot')) %>%
+      sort() %>%
+      as.character()
 
     updateSelectizeInput(
       session,
       "cds_source_select",
       choices = cds_choices,
-      options = list(
-        valueField = "cds_source",
-        labelField = "label"
-      ),
       server = TRUE,
-      selected = ifelse(nrow(cds_choices) > 0, cds_choices[[1, 1]], FALSE)
+      selected = ifelse(length(cds_choices) > 0, cds_choices[[1]], FALSE)
     )
   })
 
