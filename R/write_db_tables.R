@@ -92,7 +92,7 @@ populate_db <- function() {
   ), class = "data.frame")
 
   metadata <- metadata %>%
-    select(group, cellline, Knockdown, Knockout, group_old) %>%
+    select(group, cellline, Knockdown, Knockout, group_old, clone) %>%
     mutate(contrasts = group2contrast$contrast[match(group, group2contrast$group)])
 
   db[["metadata"]] <- metadata

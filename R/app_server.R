@@ -48,6 +48,8 @@ app_server <- function(input, output, session) {
             + '<br>'
             + '<i>Knock-out</i>: ' + escape(item.Knockout)
             + '</div>';
+            + '<i>clone</i>: ' + escape(item.clone)
+            + '</div>';
         }
       }")
     ),

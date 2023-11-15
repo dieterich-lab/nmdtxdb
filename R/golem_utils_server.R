@@ -330,21 +330,19 @@ create_trackhub_url <- function(base_url = "http://genome-euro.ucsc.edu/", db = 
 
 load_metadata <- function(db) {
   db[["metadata"]] %>%
-    select(contrasts, Knockdown, Knockout, cellline) %>%
+    select(contrasts, Knockdown, Knockout, cellline, clone) %>%
     filter(Knockdown != "LucKD") %>%
     distinct() %>%
-    collect() %>%
     mutate(
       name = str_replace(contrasts, "-vs-.*", ""),
-      Knockout = str_replace(Knockout, "_", "")
-    ) %>%
-    mutate(
+      Knockout = str_replace(Knockout, "_", ""),
+      clone = str_replace_na(""),
       contrast_label = str_glue_data(
         .,
-        "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}"
+        "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout} <i>clone</i>: {clone}"
       ),
-      label = str_c(Knockdown, Knockout, cellline, sep = "_")
-    )
+      label = str_c(Knockdown, Knockout, cellline, clone,  sep = "_")
+    ) %>% View()
 }
 
 with_tooltip <- function(value, tooltip) {
