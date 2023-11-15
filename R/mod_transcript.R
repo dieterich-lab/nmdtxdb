@@ -398,8 +398,8 @@ function(cellInfo) {
             legend.title = ggplot2::element_text(size = 6, face = "bold"),
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
-            legend.key.height = unit(0.8, "line"),
-            panel.spacing.y = unit(0.1, "cm")
+            legend.key.height = unit(0.5, "line"),
+            panel.spacing.x = unit(0.0, "cm")
           )
         ggsave(fname)
         p_final
