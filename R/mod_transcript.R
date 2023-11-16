@@ -25,8 +25,14 @@ mod_transcript_ui <- function(id) {
 
   grid(
     this_grid,
-    top = reactableOutput(ns("table_transcript")) %>%
-      withSpinner(),
+    top = div(
+      reactableOutput(ns("table_transcript")) %>%
+        withSpinner(),
+      tags$button(
+        "Download as CSV",
+        onclick = "Reactable.downloadDataCSV('mod_transcript1-table_transcript', 'table_transcript.csv')"
+      )
+    ),
     bottom_left = div(
       plotOutput(ns("gene_structure")) %>%
         withSpinner(),
@@ -40,7 +46,7 @@ mod_transcript_ui <- function(id) {
 #'
 #' This function takes a dataframe and a vector of \code{cds_id} values, and creates a customized GGPlot using ggplot2.
 #'
-#' @param df A dataframe containing the necessary columns.
+#' @param A dataframe containing the necessary columns.
 #' @param y_labs A vector of \code{cds_id} values to filter the dataframe.
 #'
 #' @return A GGPlot object.
@@ -65,7 +71,7 @@ build_dotplot <- function(df, y_labs) {
   df <- df %>%
     select(cds_id, name, padj, log2fold) %>%
     filter(cds_id %in% y_labs) %>%
-    mutate(label = str_replace_all(name, '_', '\n'))
+    mutate(label = str_replace_all(name, "_", "\n"))
 
   ggplot(
     df,
@@ -80,10 +86,11 @@ build_dotplot <- function(df, y_labs) {
     geom_point() +
     theme_linedraw() +
     labs(y = "", x = "") +
-    scale_size_continuous(limits = c(0, 20), range = c(0, 6)) +
+    scale_size_continuous(limits = c(0, 20), range = c(0, 6), breaks = c(0, 10, 20)) +
     scale_x_discrete(
-      limits=na.omit(unique(df$label)),
-      guide = guide_axis(n.dodge=2)) +
+      limits = na.omit(unique(df$label)),
+      guide = guide_axis(n.dodge = 2)
+    ) +
     scale_color_gradient2(
       low = "blue", mid = "lightyellow", high = "red",
       oob = scales::squish, limits = c(-5, 5)
@@ -159,7 +166,11 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
 
     output$table_transcript <- renderReactable({
       reactable(
-        df %>% select(transcript_id, ref_transcript_name, cds_position, contrasts, everything()),
+        df %>%
+          select(
+            transcript_id, ref_transcript_name, cds_position, contrasts, everything()
+          ) %>%
+          select(-c(name, itemRgb)),
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
         highlight = TRUE,
@@ -214,7 +225,7 @@ function (cellInfo) {
     return `<div><a href='${cds_trackhub_url}' target='_blank'>${cds_id}</a></div><div><small><i>Source</i>: ${cds_source}</small></div>`;
   }
 }")
-),
+          ),
           PTC = colDef(
             header = with_tooltip(
               "PTC", "\u2713 if the transcript has a PTC else \u274c."
@@ -389,8 +400,6 @@ function(cellInfo) {
           \(x) x$y$get_labels()
         ) |>
           unlist()
-        validate(need(length(y_labs) < 10,
-                      "Too many transcripts, download plot instead."))
         p2 <- build_dotplot(df, y_labs)
         p_final <- p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &

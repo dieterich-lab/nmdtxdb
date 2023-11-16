@@ -7,9 +7,9 @@
 build_dotplot(df, y_labs)
 }
 \arguments{
-\item{df}{A dataframe containing the necessary columns.}
-
 \item{y_labs}{A vector of \code{cds_id} values to filter the dataframe.}
+
+\item{%>%}{A dataframe containing the necessary columns.}
 }
 \value{
 A GGPlot object.
@@ -18,7 +18,7 @@ A GGPlot object.
 This function takes a dataframe and a vector of \code{cds_id} values, and creates a customized GGPlot using ggplot2.
 }
 \examples{
-df <- data.frame(
+\%>\% <- data.frame(
   cds_id = c("id1", "id2", "id3"),
   source = c("source1", "source2", "source1"),
   label = c("label1", "label2", "label3"),

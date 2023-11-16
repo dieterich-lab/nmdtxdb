@@ -201,12 +201,12 @@ plot_annotation_cdna <- function(bed12) {
     group_by(names) %>%
     summarize(start = min(start), end = max(end)) %>%
     ungroup() %>%
-    dplyr::rename(cds_id=names) %>%
-    left_join(bed12 %>% select(cds_id, is_ptc), by = 'cds_id')
+    dplyr::rename(cds_id = names) %>%
+    left_join(bed12 %>% select(cds_id, is_ptc), by = "cds_id")
 
   text <- exon %>%
     group_by(cds_id) %>%
-    mutate(eid = 1: n(), x = (start + end) / 2)
+    mutate(eid = 1:n(), x = (start + end) / 2)
 
   exon %>%
     ggplot(aes(
@@ -231,6 +231,7 @@ plot_annotation_cdna <- function(bed12) {
       data = text,
       size = 3,
       vjust = 1.5,
+      check_overlap = TRUE,
       aes(label = eid, x = x)
     ) +
     labs(fill = "PTC:") +
