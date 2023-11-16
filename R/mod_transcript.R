@@ -63,10 +63,9 @@ mod_transcript_ui <- function(id) {
 #'
 build_dotplot <- function(df, y_labs) {
   df <- df %>%
-    select(cds_id, label, padj, log2fold) %>%
+    select(cds_id, name, padj, log2fold) %>%
     filter(cds_id %in% y_labs) %>%
-    mutate(label = str_replace_all(label, '_', '\n'))
-
+    mutate(label = str_replace_all(name, '_', '\n'))
 
   ggplot(
     df,
@@ -81,8 +80,10 @@ build_dotplot <- function(df, y_labs) {
     geom_point() +
     theme_linedraw() +
     labs(y = "", x = "") +
-    # facet_grid( ~ label, scales = "free") +
-    scale_x_discrete(limits=na.omit(unique(df$label))) +
+    scale_size_continuous(limits = c(0, 20), range = c(0, 6)) +
+    scale_x_discrete(
+      limits=na.omit(unique(df$label)),
+      guide = guide_axis(n.dodge=2)) +
     scale_color_gradient2(
       low = "blue", mid = "lightyellow", high = "red",
       oob = scales::squish, limits = c(-5, 5)
@@ -92,11 +93,7 @@ build_dotplot <- function(df, y_labs) {
       axis.text.y = element_blank(),
       axis.ticks.length.y = unit(0, "pt"),
       axis.ticks.y = element_blank(),
-      axis.text.x = element_text(size = 6),
-      # axis.ticks.x = element_blank(),
-      strip.background.y = element_blank(),
-      strip.text.y = element_blank(),
-      strip.text.x = element_text(size = 5),
+      axis.text.x = element_text(size = 5),
       plot.margin = margin(0, 0, 0, 0, "pt")
     )
 }
@@ -137,8 +134,7 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
         contrasts %in% !!contrast
       ) %>%
       select(transcript_id, contrasts, padj, log2fold) %>%
-      left_join(load_metadata(db), by = "contrasts") %>%
-      select(-name)
+      left_join(load_metadata(db), by = "contrasts")
 
     anno <- db[["anno"]] %>%
       filter(transcript_id %in% !!tx) %>%
@@ -291,7 +287,7 @@ function(cellInfo) {
             header = with_tooltip(
               "contrasts", "DTE comparison in the format treatment vs control."
             ),
-            width = 160,
+            width = 220,
             show = TRUE,
             html = TRUE,
             vAlign = "center",
@@ -299,12 +295,15 @@ function(cellInfo) {
 function(cellInfo) {
   const kd = cellInfo.row['Knockdown'];
   const cl = cellInfo.row['cellline'];
-  const ko = cellInfo.row['Knockout'] || 'NoKO';
+  const ko = cellInfo.row['Knockout'] || 'NoKO'
+  const clone = cellInfo.row['clone'] || 'NA'
+
 
   if (kd === null) {
     return 'Not tested';
   } else {
-    return `<div><strong>${kd}</strong><br><small><i>Cell-line</i>: ${cl};<i> KO</i>: ${ko}</small></div>`;
+    return `<div><strong>${kd}</strong> <br><i>Cell line</i>: ${cl}
+<br><i>Clone</i>: ${clone}; <i> KO</i>: ${ko}</small></div>`;
   }
 }")
           ),
@@ -313,6 +312,7 @@ function(cellInfo) {
               "padj", "DTE adjusted p-value."
             ),
             filterable = FALSE,
+            vAlign = "center",
             show = TRUE,
             width = 100,
             align = "right"
@@ -323,6 +323,7 @@ function(cellInfo) {
             ),
             show = TRUE,
             width = 80,
+            vAlign = "center",
             format = colFormat(digits = 2),
             filterable = FALSE
           ),
@@ -347,7 +348,10 @@ function(cellInfo) {
           contrast_label = colDef(
             show = FALSE
           ),
-          label = colDef(
+          name = colDef(
+            show = FALSE
+          ),
+          clone = colDef(
             show = FALSE
           ),
           thick = colDef(
@@ -398,7 +402,7 @@ function(cellInfo) {
             legend.title = ggplot2::element_text(size = 6, face = "bold"),
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
-            legend.key.height = unit(0.5, "line"),
+            legend.key.height = unit(0.4, "line"),
             panel.spacing.x = unit(0.0, "cm")
           )
         ggsave(fname)

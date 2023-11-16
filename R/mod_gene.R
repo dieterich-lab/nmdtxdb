@@ -81,11 +81,14 @@ mod_gene_server <- function(id, db, gene_name, contrast) {
           name = colDef(
             show = FALSE
           ),
+          clone = colDef(
+            show = FALSE
+          ),
           label = colDef(
             show = FALSE
           ),
           contrasts = colDef(
-            width = 180,
+            width = 200,
             show = TRUE,
             html = TRUE,
             header = with_tooltip(
@@ -96,18 +99,17 @@ mod_gene_server <- function(id, db, gene_name, contrast) {
     const kd = cellInfo.row['Knockdown']
     const cl = cellInfo.row['cellline']
     const ko = cellInfo.row['Knockout'] || 'NoKO'
-        return (
-          '<div>' +
-          '<strong>' + kd + '</strong> <br>' +
-          '<small><i>Cell-line</i>: ' + cl +
-          ';<i> KO</i>: ' + ko + ' </small></div>'
-        )
-      }")
+    const clone = cellInfo.row['clone'] || 'NA'
+
+    return `<div><strong>${kd}</strong> <br><i>Cell line</i>: ${cl}
+<br><i>Clone</i>: ${clone}; <i> KO</i>: ${ko}</small></div>`;
+}")
           ),
           padj = colDef(
             filterable = FALSE,
             show = TRUE,
             align = "right",
+            vAlign = "center",
             header = with_tooltip(
               "padj", "DGE adjusted p-value."
             )
@@ -116,6 +118,7 @@ mod_gene_server <- function(id, db, gene_name, contrast) {
             show = TRUE,
             format = colFormat(digits = 2),
             filterable = FALSE,
+            vAlign = "center",
             header = with_tooltip(
               "log2fc", "DGE log2FoldChange."
             )

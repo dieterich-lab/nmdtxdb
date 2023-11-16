@@ -35,7 +35,7 @@ app_server <- function(input, output, session) {
     choices = metadata,
     options = list(
       valueField = "contrasts",
-      labelField = "label",
+      labelField = "name",
       render = I("{
         option: function(item, escape) {
           return '<div>'
@@ -44,7 +44,7 @@ app_server <- function(input, output, session) {
             + '<i>Cell-line</i>: ' + escape(item.cellline)
             + '<br>'
             + '<i>Knock-out</i>: ' + escape(item.Knockout)
-            + '</div>';
+            + '<br>'
             + '<i>clone</i>: ' + escape(item.clone)
             + '</div>';
         }

@@ -335,13 +335,12 @@ load_metadata <- function(db) {
     distinct() %>%
     mutate(
       name = str_replace(contrasts, "-vs-.*", ""),
+      name = str_replace_all(name, "KD-KD_", "KD_"),
       Knockout = str_replace(Knockout, "_", ""),
-      clone = str_replace_na(""),
       contrast_label = str_glue_data(
         .,
         "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout} <i>clone</i>: {clone}"
-      ),
-      label = str_c(Knockdown, Knockout, cellline, clone,  sep = "_")
+      )
     )
 }
 
