@@ -1,0 +1,15 @@
+element;intro
+#welcome;Welcome to the <b>Transcript view tour</b> for <code>NMDtxDB</code>.
+#intro;This tour will guide you through the different features of the <b>Transcript view</b>, which is the core of the NMDtxDB.
+#transcript_table;The table below combines a range of features that should help users interpret whether a gene is activates NMD or not.
+#transcript_table;Similarly to the gene expression table, this table can be sorted by clicking on the column headers. Likewise, hovering over the column headers also details the column information.
+#transcript_table;Each row represents a combination between transcript, contrast and CDS source.
+#transcript_table;The first column shows the transcript ID, which is a link to the UCSC genome browser.
+#transcript_table;The second column shows the reference transcript ID, which is a link to the Ensembl page, if is there a reference match. Reference matches are categorized as follows: <br> * <b>same_intro_chain</b>: if the two transcripts shared their introns, they are defined as the same </br>; * <b>IR</b> if the transcripts contain a retained intron <br> * or <b>Other</b> if the transcript has little similarity to references transcripts.
+#transcript_table;The LRS and the PTC columns show if there is any evidence for that transcript from the Nanopore RNA-seq dataset and if that transcript-CDS source combination triggers the 50-nt rule.
+#transcript_table;The fourth column contrast column, that may be missing if the transcript was not tested for differential transcript expression on a given contrast.
+#dotplot;below to the table the dot plot compares the combinations of transcripts, their CDS sources and the contrasts.
+#gene_table;Click on each row to compare the transcript expression for the selected transcript in comparison to the other tested transcripts on the same contrast. The vertical line shows the expression for the selected transcript.
+#dotplot;The transcript structure plot shows the cDNA transcript structure and the CDS structure. The exons are numbered. The CDS of PTC transcripts are highlighted in red.
+#dotplot;The transcript structure y-axis shows the CDS ID, which can be compared to the table above.
+#dotplot;The dot plot can be used to compare the expression of the selected transcript to the other transcripts of the same gene.

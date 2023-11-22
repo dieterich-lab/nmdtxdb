@@ -1,0 +1,8 @@
+element;intro
+#welcome;Welcome to the <b>NMDtxDB app</b>. <br> The tour will take you through the relevant elements of the UI.
+#tour_firststeps; In each different view, click on the question mark to start the tour. Click on the <b>Next</b> button to go to the next step.
+#tour_firststeps; You can exit the tour at any time by clicking on the <b>Exit</b> button.
+#gene_info;On the gene information panel you can see the gene name, the gene description, alias and links to the Ensembl and Uniprot databases.
+#gene_select;You can select a gene by typing the gene name in the search box and pressing enter, or by clicking on the gene name.
+#contrast_select;You can select a contrast by clicking on the contrast name. The contrast name is composed of the KD target, KO target if any, cell line name and cell line clone.
+#source_select;You can select a CDS source by clicking on the source name.

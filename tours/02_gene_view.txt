@@ -1,0 +1,9 @@
+element;intro
+#welcome;Welcome to the <b>Gene view tour</b> for <code>NMDtxDB</code>.
+#gene_table;The table below shows the differential gene expression results for the selected gene.
+#gene_table;The table can be sorted by clicking on the column headers.
+#gene_table;Hovering over the column headers also details the column information.
+#gene_table;Each row represents a contrast, which can be selected in the dropdown menu.
+#gene_table;Click on each row to compare the gene expression for the selected gene in comparison to the other tested genes.
+#gene_table;The box plot represents the distribution of the gene expression, while the vertical line shows the expression for the selected gene.
+#gene_table;Red colored vertical lines represent up-regulated genes, while blue colored vertical lines represent down-regulated genes.
