@@ -170,7 +170,8 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
           select(
             transcript_id, ref_transcript_name, cds_position, contrasts, everything()
           ) %>%
-          select(-c(name, itemRgb)),
+          select(-c(name, itemRgb)) %>%
+          filter(!is.na(cds_id)),
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
         highlight = TRUE,
