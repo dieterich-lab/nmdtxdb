@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList
 #' @import markdown
-mod_intro_ui <- function(id){
+mod_intro_ui <- function(id) {
   ns <- NS(id)
   this_grid <- create_grid(
     areas = rbind(c("left")),
@@ -18,16 +18,16 @@ mod_intro_ui <- function(id){
 
   grid(
     this_grid,
-    left = includeMarkdown(app_sys("app/www/intro.md"))
+    left = includeMarkdown(app_sys("app/www/intro.md")),
+    id = "grid_intro"
   )
 }
 
 #' intro Server Functions
 #'
 #' @noRd
-mod_intro_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_intro_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
   })
 }

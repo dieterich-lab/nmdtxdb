@@ -14,9 +14,9 @@ cds_source_choices <- data.frame(
 #' @import shiny
 #' @import shiny.semantic
 #' @import dplyr
+#' @importFrom rintrojs introjs
 #' @noRd
 app_server <- function(input, output, session) {
-
   mod_intro_server("intro_1")
   metadata <- load_metadata(db)
   gene_info <- reactiveVal()
@@ -55,12 +55,11 @@ app_server <- function(input, output, session) {
   )
 
   observeEvent(input$gene_select, {
-
     cds_choices <- db$anno %>%
       filter(ref_gene_name == input$gene_select) %>%
       pull(source) %>%
-      Reduce(x=., union) %>%
-      factor(., levels=c('canonical', 'ensembl', 'riboseq', 'openprot')) %>%
+      Reduce(x = ., union) %>%
+      factor(., levels = c("canonical", "ensembl", "riboseq", "openprot")) %>%
       sort() %>%
       as.character()
 
@@ -116,4 +115,18 @@ app_server <- function(input, output, session) {
       )
     }
   )
+
+  observeEvent(input$action_button_tutorial, {
+    tutorial_file <- list(
+      intro_tab = "tours/01_intro.txt",
+      gene_view_tab = "tours/02_gene_view.txt",
+      transcript_view_tab = "tours/03_transcript_view.txt"
+    )
+
+    tour <- read.delim(
+      tutorial_file[[input$tabset]],
+      sep = ";", stringsAsFactors = FALSE, row.names = NULL, quote = ""
+    )
+    introjs(session, options = list(steps = tour))
+  })
 }

@@ -29,6 +29,7 @@ mod_transcript_ui <- function(id) {
       reactableOutput(ns("table_transcript")) %>%
         withSpinner(),
       tags$button(
+        id = "transcript_download",
         "Download as CSV",
         onclick = "Reactable.downloadDataCSV('mod_transcript1-table_transcript', 'table_transcript.csv')"
       )
@@ -36,7 +37,8 @@ mod_transcript_ui <- function(id) {
     bottom_left = div(
       plotOutput(ns("gene_structure")) %>%
         withSpinner(),
-      downloadButton(ns("downloadPlot"), "Download Plot")
+      downloadButton(ns("downloadPlot"), "Download Plot"),
+      id = "download_dotplot"
     )
   )
 }

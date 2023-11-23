@@ -15,6 +15,7 @@ mod_gene_ui <- function(id) {
     reactableOutput(ns("gene_exp_table")) %>%
       shinycssloaders::withSpinner(),
     tags$button(
+      id = "gene_download",
       "Download as CSV",
       onclick = "Reactable.downloadDataCSV('mod_gene1-gene_exp_table', 'table_gene.csv')"
     )
