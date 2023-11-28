@@ -1,4 +1,3 @@
-
 #' Run the Shiny Application
 #'
 #' @param ... arguments to pass to golem_opts.

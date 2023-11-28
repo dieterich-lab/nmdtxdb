@@ -11,8 +11,15 @@
 mod_gene_ui <- function(id) {
   ns <- NS(id)
 
-  reactableOutput(ns("gene_exp_table")) %>%
-    shinycssloaders::withSpinner()
+  div(
+    reactableOutput(ns("gene_exp_table")) %>%
+      shinycssloaders::withSpinner(),
+    tags$button(
+      id = "gene_download",
+      "Download as CSV",
+      onclick = "Reactable.downloadDataCSV('mod_gene1-gene_exp_table', 'table_gene.csv')"
+    )
+  )
 }
 
 #' gene view Server Functions
@@ -21,10 +28,10 @@ mod_gene_ui <- function(id) {
 #' @import reactable
 #' @import stringr
 #' @noRd
-mod_gene_server <- function(id, conn, gene_name, contrast) {
+mod_gene_server <- function(id, db, gene_name, contrast) {
   moduleServer(id, function(input, output, session) {
     dge <- reactive({
-        db[["dge"]] %>%
+      db[["dge"]] %>%
         filter(contrasts %in% !!contrast) %>%
         select(contrasts, log2FoldChange, padj, gene_name) %>%
         collect()
@@ -53,12 +60,13 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
         select(contrasts, padj, log2FoldChange, everything())
 
       reactable(
-        dge,
+        dge %>% select(-name),
         highlight = TRUE,
         wrap = FALSE,
         details = function(index) {
           fc_boxplot(dge, index, gene_l2fc, c(xmin, xmax)) %>%
-            htmltools::plotTag(., alt = "plots", height = 150) },
+            htmltools::plotTag(., alt = "plots", height = 150)
+        },
         theme = reactableTheme(
           borderColor = "#dfe2e5",
           stripedColor = "#f6f8fa",
@@ -81,11 +89,14 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
           name = colDef(
             show = FALSE
           ),
+          clone = colDef(
+            show = FALSE
+          ),
           label = colDef(
             show = FALSE
           ),
           contrasts = colDef(
-            width = 180,
+            width = 200,
             show = TRUE,
             html = TRUE,
             header = with_tooltip(
@@ -96,18 +107,17 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
     const kd = cellInfo.row['Knockdown']
     const cl = cellInfo.row['cellline']
     const ko = cellInfo.row['Knockout'] || 'NoKO'
-        return (
-          '<div>' +
-          '<strong>' + kd + '</strong> <br>' +
-          '<small><i>Cell-line</i>: ' + cl +
-          ';<i> KO</i>: ' + ko + ' </small></div>'
-        )
-      }")
+    const clone = cellInfo.row['clone'] || 'NA'
+
+    return `<div><strong>${kd}</strong> <br><i>Cell line</i>: ${cl}
+<br><i>Clone</i>: ${clone}; <i> KO</i>: ${ko}</small></div>`;
+}")
           ),
           padj = colDef(
             filterable = FALSE,
             show = TRUE,
             align = "right",
+            vAlign = "center",
             header = with_tooltip(
               "padj", "DGE adjusted p-value."
             )
@@ -116,6 +126,7 @@ mod_gene_server <- function(id, conn, gene_name, contrast) {
             show = TRUE,
             format = colFormat(digits = 2),
             filterable = FALSE,
+            vAlign = "center",
             header = with_tooltip(
               "log2fc", "DGE log2FoldChange."
             )

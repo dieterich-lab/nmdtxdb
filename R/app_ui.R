@@ -6,10 +6,12 @@
 #' @import shiny.semantic
 #' @importFrom reactable reactableOutput
 #' @importFrom shinycssloaders withSpinner
+#' @importFrom rintrojs introjsUI
 #'
 #' @noRd
 app_ui <- function(request) {
   tagList(
+    introjsUI(),
     golem_add_external_resources(),
     semanticPage(
       sidebar_layout(
@@ -17,7 +19,8 @@ app_ui <- function(request) {
           width = 2,
           img(
             src = "www/logo.svg",
-            style = "width: 100%;"),
+            style = "width: 100%;"
+          ),
           br(),
           uiOutput("gene_info"),
           br(),
@@ -64,7 +67,6 @@ app_ui <- function(request) {
           div(
             action_button(
               input_id = "action_button_tutorial",
-              onclick = "alert('Not implemented');",
               icon = icon("question"),
               label = "Tutorial",
               style = "width: 100%; padding: 0; height: 40px"
@@ -90,14 +92,8 @@ app_ui <- function(request) {
                 content = mod_transcript_ui("mod_transcript1"),
                 id = "transcript_view_tab"
               )
-              # list(
-              #   menu = "Advanced view",
-              #   content = mod_transcript_structure_ui("mod_transcript_structure"),
-              #   id = "advanced_tab"
-              # )
             ),
-            active = "second_tab",
-            id = "transcript_tabset"
+            id = "tabset"
           )
         )
       )

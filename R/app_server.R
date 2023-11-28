@@ -14,24 +14,19 @@ cds_source_choices <- data.frame(
 #' @import shiny
 #' @import shiny.semantic
 #' @import dplyr
+#' @importFrom rintrojs introjs
 #' @noRd
 app_server <- function(input, output, session) {
   mod_intro_server("intro_1")
-
-  db <- readRDS("database.RDS")
   metadata <- load_metadata(db)
   gene_info <- reactiveVal()
-  message('running')
 
   updateSelectizeInput(
     session,
     "gene_select",
-    choices = db$anno %>% pull("ref_gene_name") %>% unique() %>% sort(),
+    choices = db$anno %>% filter(lengths(source) >= 1) %>% pull("ref_gene_name") %>% unique() %>% sort(),
     server = TRUE,
-    selected = "",
-    options = list(
-      onFocus = I("function() { this.clear(); }")
-      )
+    selected = "SRSF2"
   )
 
   updateSelectizeInput(
@@ -40,7 +35,7 @@ app_server <- function(input, output, session) {
     choices = metadata,
     options = list(
       valueField = "contrasts",
-      labelField = "label",
+      labelField = "name",
       render = I("{
         option: function(item, escape) {
           return '<div>'
@@ -49,6 +44,8 @@ app_server <- function(input, output, session) {
             + '<i>Cell-line</i>: ' + escape(item.cellline)
             + '<br>'
             + '<i>Knock-out</i>: ' + escape(item.Knockout)
+            + '<br>'
+            + '<i>clone</i>: ' + escape(item.clone)
             + '</div>';
         }
       }")
@@ -58,29 +55,20 @@ app_server <- function(input, output, session) {
   )
 
   observeEvent(input$gene_select, {
-    cds_choices <- gene_feat %>%
+    cds_choices <- db$anno %>%
       filter(ref_gene_name == input$gene_select) %>%
-      select(cds_source) %>%
-      separate_rows(., cds_source, sep = ";") %>%
-      left_join(cds_source_choices, by = "cds_source") %>%
-      rename(label = cds_source2) %>%
-      mutate(
-        cds_source = as.factor(cds_source),
-        levels(cds_source_choices$cds_source)
-      ) %>%
-      arrange(cds_source) %>%
-      mutate(cds_source = as.character(cds_source))
+      pull(source) %>%
+      Reduce(x = ., union) %>%
+      factor(., levels = c("canonical", "ensembl", "riboseq", "openprot")) %>%
+      sort() %>%
+      as.character()
 
     updateSelectizeInput(
       session,
       "cds_source_select",
       choices = cds_choices,
-      options = list(
-        valueField = "cds_source",
-        labelField = "label"
-      ),
       server = TRUE,
-      selected = ifelse(nrow(cds_choices) > 0, cds_choices[[1, 1]], FALSE)
+      selected = ifelse(length(cds_choices) > 0, cds_choices[[1]], FALSE)
     )
   })
 
@@ -102,11 +90,11 @@ app_server <- function(input, output, session) {
 
   contrast <- eventReactive(input$contrast_select, {
     input$contrast_select
-  })
+  }) %>% debounce(1500)
 
   cds_source <- eventReactive(input$cds_source_select, {
     input$cds_source_select
-  })
+  }) %>% debounce(1500)
 
   observeEvent(
     c(anno(), contrast(), cds_source()),
@@ -116,7 +104,7 @@ app_server <- function(input, output, session) {
       ref_gene_id <- anno()[[1, "ref_gene_id"]]
       gene_name <- anno()[[1, "ref_gene_name"]]
       transcript_id <- anno()[["transcript_id"]]
-      gene_info(render_gene_card(ref_gene_id, conn))
+      gene_info(render_gene_card(ref_gene_id))
 
       mod_gene_server(
         "mod_gene1", db, gene_name, contrast()
@@ -127,4 +115,18 @@ app_server <- function(input, output, session) {
       )
     }
   )
+
+  observeEvent(input$action_button_tutorial, {
+    tutorial_file <- list(
+      intro_tab = "tours/01_intro.txt",
+      gene_view_tab = "tours/02_gene_view.txt",
+      transcript_view_tab = "tours/03_transcript_view.txt"
+    )
+
+    tour <- read.delim(
+      tutorial_file[[input$tabset]],
+      sep = ";", stringsAsFactors = FALSE, row.names = NULL, quote = ""
+    )
+    introjs(session, options = list(steps = tour))
+  })
 }

@@ -25,13 +25,21 @@ mod_transcript_ui <- function(id) {
 
   grid(
     this_grid,
-    top = reactableOutput(ns("table_transcript")) %>%
-      withSpinner(),
+    top = div(
+      reactableOutput(ns("table_transcript")) %>%
+        withSpinner(),
+      tags$button(
+        id = "transcript_download",
+        "Download as CSV",
+        onclick = "Reactable.downloadDataCSV('mod_transcript1-table_transcript', 'table_transcript.csv')"
+      )
+    ),
     bottom_left = div(
-      plotOutput(ns("gene_structure")),
-      downloadButton(ns("downloadPlot"), "Download Plot")
-    ) %>%
-      withSpinner()
+      plotOutput(ns("gene_structure")) %>%
+        withSpinner(),
+      downloadButton(ns("downloadPlot"), "Download Plot"),
+      id = "download_dotplot"
+    )
   )
 }
 
@@ -40,7 +48,7 @@ mod_transcript_ui <- function(id) {
 #'
 #' This function takes a dataframe and a vector of \code{cds_id} values, and creates a customized GGPlot using ggplot2.
 #'
-#' @param df A dataframe containing the necessary columns.
+#' @param A dataframe containing the necessary columns.
 #' @param y_labs A vector of \code{cds_id} values to filter the dataframe.
 #'
 #' @return A GGPlot object.
@@ -51,121 +59,54 @@ mod_transcript_ui <- function(id) {
 #' @importFrom ggplot2 element_text element_blank
 #'
 #' @examples
-# df <- data.frame(
-#   cds_id = c("id1", "id2", "id3"),
-#   cds_source2 = c("source1", "source2", "source1"),
-#   label = c("label1", "label2", "label3"),
-#   padj = c(0.05, 0.01, 0.001),
-#   log2fold = c(2, -1, 3)
-# )
-# y_labs <- c("id1", "id3")
-# build_dotplot(df, y_labs)
+#' df <- data.frame(
+#'   cds_id = c("id1", "id2", "id3"),
+#'   source = c("source1", "source2", "source1"),
+#'   label = c("label1", "label2", "label3"),
+#'   padj = c(0.05, 0.01, 0.001),
+#'   log2fold = c(2, -1, 3)
+#' )
+#' y_labs <- c("id1", "id3")
+#' build_dotplot(df, y_labs)
 #'
 build_dotplot <- function(df, y_labs) {
   df <- df %>%
-    select(cds_id, cds_source2, label, padj, log2fold) %>%
+    select(cds_id, name, padj, log2fold) %>%
     filter(cds_id %in% y_labs) %>%
-    mutate(cds_id = factor(cds_id, levels = y_labs), label = str_replace_all(label, "_", "\n"))
+    mutate(label = str_replace_all(name, "_", "\n"))
 
-  ggplot(df, aes(x = label, y = cds_id, size = -log10(as.numeric(padj) + 1e-20), color = log2fold)) +
-    labs(color = "log2fold: ", size = "-log10(padj):") +
+  ggplot(
+    df,
+    aes(
+      x = label,
+      y = cds_id,
+      size = -log10(as.numeric(padj) + 1e-20),
+      color = log2fold
+    )
+  ) +
+    labs(color = "log2fold: ", size = "-log10(padj): ") +
     geom_point() +
     theme_linedraw() +
     labs(y = "", x = "") +
-    facet_grid(cds_source2 ~ label, scales = "free") +
+    scale_size_continuous(limits = c(0, 20), range = c(0, 6), breaks = c(0, 10, 20)) +
+    scale_x_discrete(
+      limits = na.omit(unique(df$label)),
+      guide = guide_axis(n.dodge = 2)
+    ) +
     scale_color_gradient2(
-      low = "black", mid = "aliceblue", high = "firebrick",
+      low = "blue", mid = "lightyellow", high = "red",
       oob = scales::squish, limits = c(-5, 5)
     ) +
     theme(
-      text = element_text(size = 10),
+      text = element_text(size = 12),
       axis.text.y = element_blank(),
       axis.ticks.length.y = unit(0, "pt"),
       axis.ticks.y = element_blank(),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      strip.background.y = element_blank(),
-      strip.text.y = element_blank(),
-      strip.text.x = element_text(size = 5),
+      axis.text.x = element_text(size = 5),
       plot.margin = margin(0, 0, 0, 0, "pt")
     )
 }
 
-
-#' Create Transcript Plot
-#'
-#' This function takes a dataframe containing GTF information and creates a
-#' customized transcript plot using ggplot2.
-#'
-#' @param gtf A dataframe containing GTF information.
-#'
-#' @return A GGPlot object.
-#'
-#' @import ggplot2
-#' @importFrom ggplot2 labs scale_fill_manual facet_wrap theme_linedraw
-#' @importFrom ggtranscript geom_range geom_intron
-#' @importFrom grid arrow unit
-#' @importFrom ggplot2 element_text element_blank
-#'
-#'
-#' @examples
-#' gtf <- data.frame(
-#'   type = c("exon", "CDS", "exon", "exon", "CDS", "exon"),
-#'   start = c(100, 150, 200, 250, 300, 350),
-#'   end = c(130, 170, 220, 260, 310, 360),
-#'   Name = c("transcript1", "transcript1", "transcript2", "transcript3", "transcript2", "transcript4"),
-#'   cds_source2 = c("source1", "source1", "source2", "source2", "source3", "source3"),
-#'   PTC = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
-#'   strand = c("+", "-", "+", "+", "-", "+")
-#' )
-#' build_transcript_plot(gtf)
-#'
-build_transcript_plot <- function(gtf) {
-  if (nrow(gtf) < 1) {
-    return("No CDS source to show.")
-  }
-
-  exons <- gtf %>% filter(type == "exon")
-  cds <- gtf %>% filter(type == "CDS")
-  introns <- to_intron(exons, group_var = "Name")
-  feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
-
-  exons %>%
-    ggplot(aes(
-      xstart = start,
-      xend = end,
-      y = Name
-    )) +
-    geom_range(
-      aes(
-        fill = PTC,
-        height = 0.25
-      )
-    ) +
-    geom_range(
-      data = cds,
-      aes(
-        fill = PTC
-      )
-    ) +
-    geom_intron(
-      data = introns,
-      aes(strand = strand),
-      arrow = grid::arrow(ends = "last", length = grid::unit(0.4, "lines")),
-    ) +
-    scale_fill_manual(values = feat_colors) +
-    labs(fill = "PTC:") +
-    facet_wrap(~cds_source2, ncol = 1, scales = "free_y", strip.position = "left") +
-    theme_linedraw() +
-    labs(y = "") +
-    theme(
-      text = element_text(size = 10),
-      plot.margin = margin(0, 0, 0, 0, "pt"),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.position = "top"
-    )
-}
 
 #' transcript view Server Functions
 #' @import dplyr
@@ -175,31 +116,26 @@ build_transcript_plot <- function(gtf) {
 #' @import stringr
 #' @importFrom scales scientific
 #' @noRd
-mod_transcript_server <- function(id, conn, tx, contrast, cds) {
+mod_transcript_server <- function(id, db, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {
     l2fc <- db[["dte"]] %>%
       filter(contrasts %in% !!contrast)
 
-    transcripts <- db[["gtf"]] %>%
-      filter(transcript_id %in% !!tx, type == "transcript", cds_source %in% !!cds) %>%
-      select(Name, transcript_id, cds_source, color, seqnames, start, end) %>%
+    transcripts <- db[["bed12"]] %>%
+      filter(name %in% !!tx, source %in% !!cds) %>%
       mutate(
-        PTC = color == "#FF0000",
-        position = position_from_gtf(.),
+        cds_id = .$cdna_thick$name,
+        position = glue::glue("chr{seqnames}:{start}-{end}"),
+        cds_position = glue::glue("chr{seqnames}:{thick}"),
         trackhub_url = purrr::map(
           position,
-          \(x)  create_trackhub_url(position = x)
+          \(x) create_trackhub_url(position = x)
+        ) %>% unlist(),
+        cds_trackhub_url = purrr::map(
+          cds_position,
+          \(x) create_trackhub_url(position = x)
         ) %>% unlist()
       )
-
-    not_transcrips <- db[["gtf"]] %>%
-      filter(transcript_id %in% !!tx, type != "transcript") %>%
-      left_join(
-        x = transcripts %>% select(Name, cds_source, PTC),
-        y = select(., !c(cds_source)),
-        by = "Name", multiple = "all"
-      ) %>%
-      left_join(cds_source_choices, by = "cds_source", multiple = "all")
 
     dte <- db[["dte"]] %>%
       filter(
@@ -207,70 +143,36 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
         contrasts %in% !!contrast
       ) %>%
       select(transcript_id, contrasts, padj, log2fold) %>%
-      left_join(load_metadata(db), by = "contrasts") %>%
-      select(-name)
+      left_join(load_metadata(db), by = "contrasts")
 
-    anno <- db[["gtf"]] %>%
-      filter(transcript_id %in% !!tx, type == "transcript") %>%
-      select(
-        ref_gene_name, transcript_id, ref_transcript_name,
-        ref_transcript_id, lr_support, class_code)
-
+    anno <- db[["anno"]] %>%
+      filter(transcript_id %in% !!tx) %>%
+      unnest(source)
 
     fname <- file.path(tempdir(), paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
-    cds_position <- not_transcrips %>%
-      filter(type == "CDS") %>%
-      group_by(transcript_id, cds_id) %>%
-      summarise(seqnames = first(seqnames), start = min(start), end = max(end)) %>%
-      ungroup() %>%
-      mutate(cds_position = position_from_gtf(.)) %>%
-      select(transcript_id, cds_id, cds_position) %>%
-      mutate(
-        cds_trackhub_url = purrr::map(
-          cds_position,
-          \(x) create_trackhub_url(position = x)
-        ) %>% unlist()
-      )
-
-    cds_data <- transcripts %>%
-      rename(cds_id = Name) %>%
-      left_join(cds_position, by = c("transcript_id", "cds_id")) %>%
-      mutate(
-        cds_source2 = case_when(
-          cds_source == "ensembl" ~ "Ensembl",
-          cds_source == "hek293gao" ~ "Gao et al., 2015",
-          cds_source == "openprot" ~ "OpenProt",
-          cds_source == "ribotish" ~ "Zhang et al., 2017",
-          cds_source == "transdecoder" ~ "TransDecoder"
-        )
-      )
-
-
     df <- anno %>%
       left_join(dte, by = "transcript_id", multiple = "all") %>%
-      left_join(cds_data, by = "transcript_id", multiple = "all") %>%
-      select(transcript_id, ref_transcript_name, PTC, lr_support, everything()) %>%
+      left_join(transcripts, by = c("transcript_id" = "name", "source"), multiple = "all") %>%
+      rename(PTC = is_ptc) %>%
+      select(transcript_id, ref_transcript_name, everything()) %>%
       mutate(
         log2fold = round(log2fold, 2),
         padj = padj %>% scientific(),
-        class_code = case_when(
-          class_code == "=" ~ "Complete",
-          class_code == "n" ~ "Retained introns",
-          class_code %in% c("c", "j", "k") ~ "Splicing variants",
-          TRUE ~ "Other"
-        ),
+        cds_id = cdna_thick$names
       ) %>%
-      select(-c(seqnames, start, end, color)) %>%
-      distinct(transcript_id, cds_id, cds_source, contrasts, .keep_all = TRUE)
-
+      select(-c(seqnames, start, end, width, strand, cdna_thick, cdna_blocks))
 
     output$table_transcript <- renderReactable({
       reactable(
-        df,
+        df %>%
+          select(
+            transcript_id, ref_transcript_name, cds_position, contrasts, everything()
+          ) %>%
+          select(-c(name, itemRgb, gene_id, gene_name, ref_gene_id)) %>%
+          filter(!is.na(cds_id)),
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
-        bordered = TRUE,
         highlight = TRUE,
         wrap = FALSE,
         details = function(index) {
@@ -302,7 +204,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
           sortNALast = TRUE
         ),
         columns = list(
-          cds_id = colDef(
+          cds_position = colDef(
             header = with_tooltip(
               "CDS_info", "CDS ID, provenance and URL to the trackhub."
             ),
@@ -313,7 +215,7 @@ mod_transcript_server <- function(id, conn, tx, contrast, cds) {
             html = TRUE,
             cell = JS("
 function (cellInfo) {
-  const cds_source = cellInfo.row['cds_source2'];
+  const cds_source = cellInfo.row['source'];
   const cds_id = cellInfo.row['cds_id'];
   const cds_trackhub_url = cellInfo.row['cds_trackhub_url'];
 
@@ -382,7 +284,7 @@ function (cellInfo) {
             html = TRUE,
             cell = JS("
 function(cellInfo) {
-  const cc = cellInfo.row['class_code'];
+  const cc = cellInfo.row['match'];
   const ti = cellInfo.row['ref_transcript_id'];
   const lab1 = '<div>' + '<strong>' + cellInfo.value + '</strong> </div>'
   const lab2 = '<div><small><i>Match</i>: ' + cc + '</small></div>';
@@ -396,7 +298,7 @@ function(cellInfo) {
             header = with_tooltip(
               "contrasts", "DTE comparison in the format treatment vs control."
             ),
-            width = 160,
+            width = 220,
             show = TRUE,
             html = TRUE,
             vAlign = "center",
@@ -404,12 +306,15 @@ function(cellInfo) {
 function(cellInfo) {
   const kd = cellInfo.row['Knockdown'];
   const cl = cellInfo.row['cellline'];
-  const ko = cellInfo.row['Knockout'] || 'NoKO';
+  const ko = cellInfo.row['Knockout'] || 'NoKO'
+  const clone = cellInfo.row['clone'] || 'NA'
+
 
   if (kd === null) {
     return 'Not tested';
   } else {
-    return `<div><strong>${kd}</strong><br><small><i>Cell-line</i>: ${cl};<i> KO</i>: ${ko}</small></div>`;
+    return `<div><strong>${kd}</strong> <br><i>Cell line</i>: ${cl}
+<br><i>Clone</i>: ${clone}; <i> KO</i>: ${ko}</small></div>`;
   }
 }")
           ),
@@ -418,6 +323,7 @@ function(cellInfo) {
               "padj", "DTE adjusted p-value."
             ),
             filterable = FALSE,
+            vAlign = "center",
             show = TRUE,
             width = 100,
             align = "right"
@@ -428,25 +334,20 @@ function(cellInfo) {
             ),
             show = TRUE,
             width = 80,
+            vAlign = "center",
             format = colFormat(digits = 2),
             filterable = FALSE
           ),
           Knockdown = colDef(
             show = FALSE
           ),
-          cds_source = colDef(
-            show = FALSE
-          ),
-          cds_source2 = colDef(
-            show = FALSE
-          ),
-          cds_id = colDef(
-            show = FALSE
-          ),
-          cds_position = colDef(
+          source = colDef(
             show = FALSE
           ),
           cds_trackhub_url = colDef(
+            show = FALSE
+          ),
+          cds_id = colDef(
             show = FALSE
           ),
           Knockout = colDef(
@@ -458,10 +359,16 @@ function(cellInfo) {
           contrast_label = colDef(
             show = FALSE
           ),
-          label = colDef(
+          name = colDef(
             show = FALSE
           ),
-          class_code = colDef(
+          clone = colDef(
+            show = FALSE
+          ),
+          thick = colDef(
+            show = FALSE
+          ),
+          match = colDef(
             show = FALSE
           ),
           ref_gene_name = colDef(
@@ -473,6 +380,12 @@ function(cellInfo) {
           ref_transcript_id = colDef(
             show = FALSE
           ),
+          ptc = colDef(
+            show = FALSE
+          ),
+          itemRgb = colDef(
+            show = FALSE
+          ),
           position = colDef(
             show = FALSE
           )
@@ -481,13 +394,12 @@ function(cellInfo) {
     })
     output$gene_structure <- renderPlot(
       {
-        p1 <- build_transcript_plot(not_transcrips)
+        p1 <- plot_annotation_cdna(transcripts)
         y_labs <- lapply(
           ggplot_build(p1)$layout$panel_params,
           \(x) x$y$get_labels()
         ) |>
           unlist()
-        validate(need(length(y_labs) < 8, "Too many transcript, download plot instead."))
         p2 <- build_dotplot(df, y_labs)
         p_final <- p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
@@ -495,14 +407,12 @@ function(cellInfo) {
             legend.box = "vertical",
             legend.position = "left",
             legend.margin = margin(),
-            legend.box.margin = margin(6, 6, 6, 6),
             legend.text = element_text(size = 6),
             legend.title = ggplot2::element_text(size = 6, face = "bold"),
             legend.key.size = unit(0.9, "line"),
             legend.key.width = unit(1, "line"),
-            legend.key.height = unit(0.8, "line"),
-            panel.spacing.x = unit(0.1, "cm"),
-            panel.spacing.y = unit(0.1, "cm")
+            legend.key.height = unit(0.4, "line"),
+            panel.spacing.x = unit(0.0, "cm")
           )
         ggsave(fname)
         p_final

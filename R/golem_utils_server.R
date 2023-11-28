@@ -86,13 +86,6 @@ col_5 <- function(...) {
 }
 
 
-
-
-bigwig <- list(
-  control1 = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-1.bigWig",
-  SMG6kd_SMG7ko = "https://trackhub.dieterichlab.org/tbrittoborges/nmd_transcriptome/hg38/33F-14.bigWig"
-)
-
 log10_or_max <- function(x) {
   log10x <- log10(x)
   log10x[log10x <= -Inf] <- min(log10x[is.finite(log10x)])
@@ -141,18 +134,8 @@ get_gene_info <- function(gene_id) {
 #' @importFrom htmltools tagAppendAttributes
 #' @importFrom stringr str_interp str_glue
 #' @note remove db calls and test
-render_gene_card <- function(gene_id, conn) {
+render_gene_card <- function(gene_id) {
   parsed <- get_gene_info(gene_id)$content
-
-  # dge_l2fc <- tbl(conn, "dge") %>%
-  #   filter(gene_id == !!gene_id) %>%
-  #   collect() %>%
-  #   pull(log2FoldChange)
-  # is_nmd <- transcripts %>% with(table(transcript_biotype == "nonsense_mediated_decay"))
-  # n_transcripts <- nrow(transcripts)
-  # n_nmd <- ifelse(length(is_nmd) == 2, is_nmd[2], 0)
-  # has_support <- tbl(conn, "has_support") %>% collect()
-  # n_support <- length(intersect(transcripts$transcript_id, has_support$transcript_id))
 
   card(
     align = "left",
@@ -170,19 +153,6 @@ render_gene_card <- function(gene_id, conn) {
           str_interp("Also known as: ${paste(parsed$alias, collapse=', ')}")
         )
       ),
-      # div(str_glue("NMD isoforms: {n_nmd}/{sum(n_transcripts)}")),
-      # div(
-      #   str_glue("Up-regulated in {sum(dge_l2fc > 0.1, na.rm=TRUE)}/{length(dge_l2fc)} cohorts"),
-      #   icon("question circle"),
-      # ) %>% tagAppendAttributes(., "data-tooltip" = "Number of datasets with l2fc > 0.1"),
-      # p("Novel transcripts : X/XX"),
-      # div(
-      #   str_glue("Long read evidence: {n_support}/{n_transcripts}"),
-      #   icon("question circle"),
-      # ) %>% tagAppendAttributes(
-      #   .,
-      #   "data-tooltip" = "Isoforms with identical intron chain"
-      # ),
       div(
         "Ensembl:",
         a(
@@ -216,41 +186,58 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
   )
 }
 
+#' Plot a transcript on the cDNA coordiantes highlighting PTC containing
+#' transcripts
+#' @import dplyr ggtranscript
+#'
+plot_annotation_cdna <- function(bed12) {
+  feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
+  exon <- bed12$cdna_blocks
+  names(exon) <- bed12$cdna_thick$name
+  exon <- exon %>% dplyr::bind_rows(.id = "cds_id")
 
-plot_annotation <- function(gtf) {
-  gtf <- gtf %>%
-    mutate(name = paste0(transcript_name, " ", transcript_biotype))
+  cds <- bed12$cdna_thick %>%
+    dplyr::bind_rows() %>%
+    group_by(names) %>%
+    summarize(start = min(start), end = max(end)) %>%
+    ungroup() %>%
+    dplyr::rename(cds_id = names) %>%
+    left_join(bed12 %>% select(cds_id, is_ptc), by = "cds_id")
 
-  exons <- gtf %>% dplyr::filter(type == "exon")
-  cds <- gtf %>% dplyr::filter(type == "CDS")
-  introns <- ggtranscript::to_intron(exons, group_var = "transcript_id")
+  text <- exon %>%
+    group_by(cds_id) %>%
+    mutate(eid = 1:n(), x = (start + end) / 2)
 
-  p1 <- exons %>%
+  exon %>%
     ggplot(aes(
       xstart = start,
       xend = end,
-      y = name
+      y = cds_id
     )) +
-    ggtranscript::geom_range(
+    geom_range(
+      fill = "white",
+      height = 0.25
+    ) +
+    geom_range(
+      data = cds,
+      height = 0.40,
+      alpha = .50,
       aes(
-        height = 0.25
+        fill = is_ptc
       )
     ) +
-    ggtranscript::geom_range(
-      data = cds
+    scale_fill_manual(values = feat_colors) +
+    geom_text(
+      data = text,
+      size = 3,
+      vjust = 1.5,
+      check_overlap = TRUE,
+      aes(label = eid, x = x)
     ) +
-    ggtranscript::geom_intron(
-      data = introns,
-      aes(strand = strand)
-    ) +
-    theme_minimal() +
-    labs(y = "") +
-    theme(
-      axis.ticks = element_blank(),
-      legend.position = c(0.87, 0.75)
-    )
+    labs(fill = "PTC:") +
+    theme_linedraw() +
+    labs(y = "", x = "")
 }
-
 
 
 #' Simplifies grid creation
@@ -294,6 +281,23 @@ position_from_gtf <- function(gtf) {
 }
 
 
+#' Make Unique Character Vectors with Suffixes
+#'
+#' Takes a character vector and makes each element unique by appending an increment
+#'
+#' @param strings A character vector with potentially non-unique elements.
+#' @return A character vector where each element has been made unique by appending
+#' an underscore and an occurrence number.
+#' @examples
+#' original_vector <- c("apple", "banana", "apple", "orange", "banana", "banana")
+#' make_unique(original_vector)
+#' @export
+make_unique <- function(strings) {
+  counts <- ave(strings, strings, FUN = seq_along)
+  return(paste0(strings, "_", counts))
+}
+
+
 #' Create Trackhub URL
 #'
 #' This function generates a URL for accessing a track hub on the UCSC Genome Browser.
@@ -326,21 +330,18 @@ create_trackhub_url <- function(base_url = "http://genome-euro.ucsc.edu/", db = 
 }
 
 load_metadata <- function(db) {
-  db[['metadata']] %>%
-    select(contrasts, Knockdown, Knockout, cellline) %>%
+  db[["metadata"]] %>%
+    select(contrasts, Knockdown, Knockout, cellline, clone) %>%
     filter(Knockdown != "LucKD") %>%
     distinct() %>%
-    collect() %>%
     mutate(
       name = str_replace(contrasts, "-vs-.*", ""),
-      Knockout = str_replace(Knockout, "_", "")
-    ) %>%
-    mutate(
+      name = str_replace_all(name, "KD-KD_", "KD_"),
+      Knockout = str_replace(Knockout, "_", ""),
       contrast_label = str_glue_data(
         .,
-        "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout}"
-      ),
-      label = str_c(Knockdown, Knockout, cellline, sep = "_")
+        "<b> {Knockdown} </b> <br> <i>Cell-line</i>: {cellline}; <i>KO</i>: {Knockout} <i>clone</i>: {clone}"
+      )
     )
 }
 

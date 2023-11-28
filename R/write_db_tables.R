@@ -1,3 +1,46 @@
+library(rtracklayer)
+library(plyranges)
+
+resolve_CDS_from_GTF <- function(gtf_file, cds_bed_file) {
+  gtf_data <- import(gtf_file)
+
+  # Filter for 'exon' type and select transcript IDs
+  exon_list <- gtf_data %>%
+    filter(type == "exon") %>%
+    select(transcript_id) %>%
+    split(., ~transcript_id)
+
+  # Convert to BED format
+  bed_data <- asBED(exon_list)
+
+  # Import the CDS BED file, and extend the CDS start with the score column
+  cds_data <- import(cds_bed_file)
+  cds_data <- IRanges(start = start(cds_data), width = score(cds_data), name = seqnames(cds_data))
+
+  # Use names to match CDS and transcript, set nomatch to empty range
+  cds_data <- c(cds_data, IRanges(start = 1, width = 0))
+  bed_data$c_thick <- cds_data[match(bed_data$name, names(cds_data), nomatch = length(cds_data))]
+  # drop nomatch
+  bed_data <- bed_data[width(bed_data$c_thick) > 0]
+
+  # Map to genomic positions
+  bed_data$g_thick <- GenomicFeatures::pmapFromTranscripts(bed_data$c_thick, exon_list[bed_data$name])
+  bed_data$g_thick <- range(bed_data$g_thick) %>%
+    unlist(use.names = FALSE) %>%
+    ranges()
+  bed_data$c_blocks <- bed_data$blocks
+
+  # Handle negative strand
+  neg_idx <- which(strand(bed_data) == "-")
+  bed_data$c_blocks <- revElements(bed_data$c_blocks, neg_idx)
+  bed_data$c_blocks <- endoapply(
+    bed_data$c_blocks,
+    \(.x) IRanges(end = cumsum(width(.x)), width = width(.x))
+  )
+
+  return(bed_data)
+}
+
 #' Updated db
 #'
 #' @import dplyr
@@ -51,7 +94,7 @@ populate_db <- function() {
   ), class = "data.frame")
 
   metadata <- metadata %>%
-    select(group, cellline, Knockdown, Knockout, group_old) %>%
+    select(group, cellline, Knockdown, Knockout, group_old, clone) %>%
     mutate(contrasts = group2contrast$contrast[match(group, group2contrast$group)])
 
   db[["metadata"]] <- metadata
@@ -106,40 +149,51 @@ populate_db <- function() {
 
   db[["anno"]] <- anno
 
+  get_ref_match <- function(file) {
+    ref_match <- read.table(file,
+      col.names = c("query_id", "locus_id", "ref", "class_code", "sample_info")
+    )
+    ref_match$transcript_id <- str_split(ref_match$sample_info, "\\|", simplify = TRUE)
+    ref_match$transcript_id <- ref_match$transcript_id[, 2]
+    ref_match <- ref_match %>%
+      mutate(class_code = case_when(
+        class_code == "=" ~ "same_intron_chain",
+        class_code == "n" ~ "IR",
+        class_code %in% c("c", "j", "k") ~ "splicing_variants",
+        TRUE ~ "other"
+      ))
+
+    ref_match %>%
+      dplyr::select(transcript_id, class_code) %>%
+      tibble::deframe()
+  }
+  ref_match <- get_ref_match("/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/compared/fix_comp_ref.tracking")
+  db$anno$match <- ref_match[db$anno$transcript_id]
+
+  lr_support <- readRDS("/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/lr_support.RDS")
+  db$anno$lr_support <- db$anno$transcript_id %in% lr_support$seqnames
+
   gtf <- left_join(gtf, anno, by = "transcript_id")
   db[["gtf"]] <- gtf
 
-  dds <- readRDS(file.path(base_path, "gene_counts.RDS")) %>%
-    DESeqDataSetFromTximport(
-      txi = .,
-      colData = metadata |> select("group"),
-      design = ~group
-    ) %>%
-    DESeq(.)
+  bed12 <- readRDS("longorf_bed12.RDS")
+  bed12$cdna_thick <- data.frame(
+    start = bed12$cdna_thick.start,
+    end = bed12$cdna_thick.end
+  )
+  bed12[c("cdna_thick.start", "cdna_thick.end", "cdna_thick.width")] <- NULL
 
-  gene_counts <- DESeq::counts(dds) %>%
-    as_tibble(rownames = "gene_id") %>%
-    tidyr::pivot_longer(-gene_id) %>%
-    mutate(group = str_remove(name, "_[12345]")) %>%
-    left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
-    distinct()
+  bed12$cdna_thick$names <- make_unique(bed12$name)
+  db$bed12 <- bed12
 
-  db[["gene_counts"]] <- gene_counts
+  tmp <- db$bed12 %>%
+    select(name, source) %>%
+    group_by(name) %>%
+    summarise(source = list(unique(source)))
 
-  tx_counts <- readRDS(file.path(base_path, "drimseq_data.RDS")) %>%
-    DRIMSeq::counts() %>%
-    dplyr::rename(transcript_id = feature_id) %>%
-    tidyr::pivot_longer(-c(transcript_id, gene_id)) %>%
-    mutate(group = str_replace_all(name, "[.]", "-") %>% str_remove(., "_[12345]")) %>%
-    group_by(gene_id, group) %>%
-    mutate(total = sum(value, na.rm = TRUE)) %>%
-    filter(total != 0) %>%
-    ungroup() %>%
-    mutate(usage = value / total) %>%
-    left_join(metadata %>% select(group_old, contrasts), by = c("group" = "group_old")) %>%
-    distinct()
+  db$anno <- db$anno %>% left_join(tmp, by = c("transcript_id" = "name"))
 
-  db[["tx_counts"]] <- tx_counts
 
-  saveRDS(db, 'database.RDS')
+  saveRDS(db, "database.RDS")
 }
+#
