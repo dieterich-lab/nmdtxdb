@@ -24,7 +24,7 @@ app_server <- function(input, output, session) {
   updateSelectizeInput(
     session,
     "gene_select",
-    choices = db$anno %>% filter(lengths(source) > 1) %>% pull("ref_gene_name") %>% unique() %>% sort(),
+    choices = db$anno %>% filter(lengths(source) >= 1) %>% pull("ref_gene_name") %>% unique() %>% sort(),
     server = TRUE,
     selected = "SRSF2"
   )
