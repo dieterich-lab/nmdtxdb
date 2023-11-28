@@ -147,24 +147,21 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
 
     anno <- db[["anno"]] %>%
       filter(transcript_id %in% !!tx) %>%
-      select(
-        ref_gene_name, transcript_id, ref_transcript_name,
-        ref_transcript_id, lr_support, match
-      )
+      unnest(source)
 
     fname <- file.path(tempdir(), paste0("nmdtxdb_", anno$ref_gene_name[1], ".png"))
 
     df <- anno %>%
       left_join(dte, by = "transcript_id", multiple = "all") %>%
-      left_join(transcripts, by = c("transcript_id" = "name"), multiple = "all") %>%
+      left_join(transcripts, by = c("transcript_id" = "name", "source"), multiple = "all") %>%
       rename(PTC = is_ptc) %>%
       select(transcript_id, ref_transcript_name, everything()) %>%
       mutate(
         log2fold = round(log2fold, 2),
-        padj = padj %>% scientific()
+        padj = padj %>% scientific(),
+        cds_id = cdna_thick$names
       ) %>%
-      select(-c(seqnames, start, end, width, strand, cdna_thick, cdna_blocks)) %>%
-      distinct(transcript_id, contrasts, .keep_all = TRUE)
+      select(-c(seqnames, start, end, width, strand, cdna_thick, cdna_blocks))
 
     output$table_transcript <- renderReactable({
       reactable(
@@ -172,7 +169,7 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
           select(
             transcript_id, ref_transcript_name, cds_position, contrasts, everything()
           ) %>%
-          select(-c(name, itemRgb)) %>%
+          select(-c(name, itemRgb, gene_id, gene_name, ref_gene_id)) %>%
           filter(!is.na(cds_id)),
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
