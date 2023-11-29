@@ -118,9 +118,9 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$action_button_tutorial, {
     tutorial_file <- list(
-      intro_tab = "tours/01_intro.txt",
-      gene_view_tab = "tours/02_gene_view.txt",
-      transcript_view_tab = "tours/03_transcript_view.txt"
+      intro_tab = app_sys("tours/01_intro.txt"),
+      gene_view_tab = app_sys("tours/02_gene_view.txt"),
+      transcript_view_tab = app_sys("tours/03_transcript_view.txt")
     )
 
     tour <- read.delim(
