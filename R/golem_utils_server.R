@@ -157,7 +157,7 @@ render_gene_card <- function(gene_id) {
         "Ensembl:",
         a(
           gene_id,
-          href = paste0("https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=", gene_id),
+          href = paste0("http://nov2020.archive.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=", gene_id),
           target = "_blank"
         )
       ),

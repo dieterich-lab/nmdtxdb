@@ -289,7 +289,7 @@ function(cellInfo) {
   const lab1 = '<div>' + '<strong>' + cellInfo.value + '</strong> </div>'
   const lab2 = '<div><small><i>Match</i>: ' + cc + '</small></div>';
 
-  const url = 'http://www.ensembl.org/id/' + ti;
+  const url = 'https://nov2020.archive.ensembl.org/Homo_sapiens/Transcript/Summary?t=' + ti;
   return `<a href='${url}' target='_blank'>${lab1}</a>${lab2}`;
 
 }")
