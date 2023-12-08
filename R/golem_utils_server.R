@@ -336,7 +336,7 @@ load_metadata <- function(db) {
     distinct() %>%
     mutate(
       name = str_replace(contrasts, "-vs-.*", ""),
-      name = str_replace_all(name, "KD-KD_", "KD_"),
+      name = str_replace(name, "KD-KD", "-KD"),
       Knockout = str_replace(Knockout, "_", ""),
       contrast_label = str_glue_data(
         .,
