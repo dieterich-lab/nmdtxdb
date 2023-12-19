@@ -394,13 +394,19 @@ function(cellInfo) {
     })
     output$gene_structure <- renderPlot(
       {
-        p1 <- plot_annotation_cdna(transcripts)
-        y_labs <- lapply(
-          ggplot_build(p1)$layout$panel_params,
-          \(x) x$y$get_labels()
-        ) |>
-          unlist()
+        y_labs <- intersect(
+          transcripts %>%
+            pull(cds_id),
+          df %>%
+            filter(!is.na(log2fold)) %>%
+            dplyr::pull(cds_id)
+        )
+
+        p1 <- plot_annotation_cdna(transcripts %>%
+          filter(cds_id %in% y_labs))
+
         p2 <- build_dotplot(df, y_labs)
+
         p_final <- p1 + p2 +
           patchwork::plot_layout(widths = c(4, 1), guides = "collec") &
           theme(
