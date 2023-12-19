@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 
 # db <- readRDS("database2.RDS")
 devtools::load_all()
-anno <- db[['anno']] %>% filter(gene_name == "SRSF2")
+anno <- db[['anno']] %>% filter(gene_name == "BAG3")
 contrast <- c("HEK_SMG7KO_SMG6KD-KD_Z319-vs-HEK_SMG7KO_LucKD-KD_Z319")
 tx <- anno$transcript_id
 cds <- c('canonical', 'ensembl')
