@@ -194,7 +194,7 @@ send_toast <- function(msg, session, position = "top right", class = "warning", 
 #' transcripts
 #' @import dplyr ggtranscript
 #'
-plot_annotation_cdna <- function(bed12) {
+plot_annotation_cdna <- function(bed12, y_labs) {
   feat_colors <- c("TRUE" = "firebrick", "FALSE" = "black")
   exon <- bed12$cdna_blocks
   names(exon) <- bed12$cdna_thick$name
@@ -231,6 +231,7 @@ plot_annotation_cdna <- function(bed12) {
       )
     ) +
     scale_fill_manual(values = feat_colors) +
+    scale_y_discrete(limits = y_labs) +
     geom_text(
       data = text,
       size = 3,
