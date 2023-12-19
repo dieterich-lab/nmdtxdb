@@ -406,7 +406,6 @@ function(cellInfo) {
           need(y_labs, "No entries to show.")
         )
 
-
         p1 <- plot_annotation_cdna(transcripts %>%
           filter(cds_id %in% y_labs), y_labs)
 
