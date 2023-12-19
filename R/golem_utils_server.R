@@ -136,6 +136,10 @@ get_gene_info <- function(gene_id) {
 #' @note remove db calls and test
 render_gene_card <- function(gene_id) {
   parsed <- get_gene_info(gene_id)$content
+  if (is(parsed, "data.frame")) {
+    parsed <- as.list(parsed[-1, ])
+    parsed$alias <- unlist(parsed$alias)
+  }
 
   card(
     align = "left",
