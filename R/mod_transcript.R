@@ -165,13 +165,14 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
       select(-c(seqnames, start, end, width, strand, cdna_thick, cdna_blocks))
 
     output$table_transcript <- renderReactable({
+      df <- df %>%
+        select(
+          transcript_id, ref_transcript_name, cds_position, contrasts, everything()
+        ) %>%
+        select(-c(name, itemRgb, gene_id, gene_name, ref_gene_id)) %>%
+        filter(!is.na(cds_id))
       reactable(
-        df %>%
-          select(
-            transcript_id, ref_transcript_name, cds_position, contrasts, everything()
-          ) %>%
-          select(-c(name, itemRgb, gene_id, gene_name, ref_gene_id)) %>%
-          filter(!is.na(cds_id)),
+        df,
         defaultSorted = c("PTC"),
         defaultPageSize = 5,
         highlight = TRUE,
