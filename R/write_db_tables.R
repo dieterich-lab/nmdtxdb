@@ -48,12 +48,13 @@ resolve_CDS_from_GTF <- function(gtf_file, cds_bed_file) {
 #' @import tidyr
 #' @import magrittr
 #' @importFrom tibble deframe
-#' @importFrom tidyr fill
+#' @importFrom tidyr fill replace_na
 populate_db <- function() {
   base_path <- "/Volumes/beegfs/prj/Niels_Gehring/nmd_transcriptome/phaseFinal/data/"
 
   db <- list()
 
+  ## metadata #
   metadata <- readRDS(file.path(base_path, "metadata.RDS"))
   metadata <- as.data.frame(metadata)
   metadata$Knockout <- replace_na(metadata$Knockout, "_NoKO")
@@ -98,7 +99,7 @@ populate_db <- function() {
     mutate(contrasts = group2contrast$contrast[match(group, group2contrast$group)])
 
   db[["metadata"]] <- metadata
-
+  ## DTE results #
   dte <- readRDS(file.path(base_path, "dte_results.RDS")) %>%
     tibble() %>%
     select(1:8, starts_with("log2fold_")) %>%
@@ -174,9 +175,8 @@ populate_db <- function() {
   db$anno$lr_support <- db$anno$transcript_id %in% lr_support$seqnames
 
   gtf <- left_join(gtf, anno, by = "transcript_id")
-  db[["gtf"]] <- gtf
 
-  bed12 <- readRDS("longorf_bed12.RDS")
+  bed12 <- readRDS(file.path(base_path, "../longorf_bed12.RDS"))
   bed12$cdna_thick <- data.frame(
     start = bed12$cdna_thick.start,
     end = bed12$cdna_thick.end
@@ -193,7 +193,5 @@ populate_db <- function() {
 
   db$anno <- db$anno %>% left_join(tmp, by = c("transcript_id" = "name"))
 
-
   saveRDS(db, "database.RDS")
 }
-#
