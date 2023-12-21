@@ -109,7 +109,10 @@ populate_db <- function() {
     select(-starts_with("log2fold_"))
   dte <- dte %>% rename(contrasts = contrast)
 
-  db[["dte"]] <- dte
+  db[["dte"]] <- dte %>%
+    group_by(contrasts) %>%
+    mutate(padj = p.adjust(pvalue, method = "BH")) %>%
+    ungroup()
 
   dge <- readRDS(file.path(base_path, "dge_results.RDS")) %>%
     rename(contrasts = contrast)
