@@ -1,6 +1,6 @@
-Package: nmdtx
+Package: nmdtxdb
 Title: NMD transcriptome
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Thiago", "Britto-Borges", , "thiago.brittoborges@uni-heidelberg.de", role = c("cre", "aut"))
 Description: PKG_DESC.

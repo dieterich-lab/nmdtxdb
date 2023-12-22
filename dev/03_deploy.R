@@ -4,16 +4,16 @@ aout <- pkgbuild::build(
   vignettes = FALSE,
 )
 
-install.packages("deploy/nmdtx_0.0.0.9000.tar.gz", repos = NULL, type ="source")
+install.packages("deploy/nmdtxdb_0.0.0.9000.tar.gz", repos = NULL, type ="source")
 db <- readRDS("database.RDS")
 devtools::test()
 
-system("scp database2.RDS tbrittoborges@shinynew:apps/nmd-app/data/database.RDS")
-system("scp deploy/nmdtx_0.0.0.9000.tar.gz tbrittoborges@shinynew:apps/nmd-app/deploy/")
+system("scp database.RDS tbrittoborges@shinynew:apps/nmd-app/data/database.RDS")
+system("scp deploy/mdtxdb_0.0.0.9000.tar.gz tbrittoborges@shinynew:apps/nmd-app/deploy/")
 system("scp renv.lock tbrittoborges@shinynew:apps/nmd-app/")
 
 # ssh shinynew
-# cd apps/nmd-app/deploy/
+# cd apps/nmd-app/
 # ./deploy/build.sh
 # sudo -i
 # cd /tmp_shiny/nmd_transcriptome_criu_dump/
@@ -23,4 +23,5 @@ system("scp renv.lock tbrittoborges@shinynew:apps/nmd-app/")
 # sudo rmate /srv/shiny/prod/application.yml
 # sudo systemctl restart shinyproxy-prod
 #
-
+# cp canonical.bb ensembl.bb riboseq.bb openprot.bb /prj/trackhubs/nmd_transcriptome/hg38/
+# deploy_new_trackhub.sh /prj/trackhubs/nmd_transcriptome/

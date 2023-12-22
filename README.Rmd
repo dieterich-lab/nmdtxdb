@@ -26,7 +26,7 @@ nmdtx is the front-end for the NMD transcriptome project.
 You can install the development version of nmdtx like so:
 
 ``` r
-devtools::install_github("https://github.com/dieterich-lab/nmd-app")
+devtools::install_github("https://github.com/dieterich-lab/nmdtxdb")
 ```
 
 ## Dev  

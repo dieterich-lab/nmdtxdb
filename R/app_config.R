@@ -9,7 +9,7 @@
 #'
 #' @noRd
 app_sys <- function(...) {
-  system.file(..., package = "nmdtx")
+  system.file(..., package = "nmdtxdb")
 }
 #' Read App Config
 #'
