@@ -17,9 +17,12 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License](https://img.shields.io/github/license/dieterich-lab/nmdtxdb)](LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/dieterich-lab/nmdtxdb)](https://github.com/dieterich-lab/nmdtxdb/issues)
+
 <!-- badges: end -->
 
-nmdtx is the front-end for the NMD transcriptome project.
+Source code and data for [NMDtxDB]( https://shiny.dieterichlab.org/app/NMDtxDB).
 
 ## Installation
 
@@ -30,7 +33,9 @@ devtools::install_github("https://github.com/dieterich-lab/nmdtxdb")
 ```
 
 ## Dev  
- - TODO  
+For instruction on how to run the development version see [run_dev.R](dev/run_dev.R)
  
 ## Deployment
-- TODO
+
+For instruction on how to deploy the app with the check-point restore with ShinyProxy see: [run_app.R](For instruction on how to run the development version see [deploy/README.md](deploy/README.md).
+)

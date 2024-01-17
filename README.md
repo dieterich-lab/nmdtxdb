@@ -7,33 +7,30 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License](https://img.shields.io/github/license/dieterich-lab/nmdtxdb)](LICENSE)
+[![GitHub
+issues](https://img.shields.io/github/issues/dieterich-lab/nmdtxdb)](https://github.com/dieterich-lab/nmdtxdb/issues)
+
 <!-- badges: end -->
 
-nmdtx is the front-end for the NMD transcriptome project.
+Source code and data for
+[NMDtxDB](https://shiny.dieterichlab.org/app/NMDtxDB).
 
 ## Installation
 
 You can install the development version of nmdtx like so:
 
 ``` r
-devtools::install_github("https://github.com/dieterich-lab/nmd-app")
+devtools::install_github("https://github.com/dieterich-lab/nmdtxdb")
 ```
 
 ## Dev
 
-### Resolving Renv::restore()
-
-renv::restore() will failed because there are dependencies of ggtranscript
-it cannot find. This can be solved by installing these with 
-```
-renv::install('bioc::GenomicRanges')
-renv::restore()
-```
-As described in `deploy/Dockerfile`.
-
-In addition, shared libraries from a conda enviroment my interfere with R, 
-remeber to deactivate the enviroment once executing the Renv::update().
+For instruction on how to run the development version see
+[run_dev.R](dev/run_dev.R)
 
 ## Deployment
 
--   TODO
+For instruction on how to deploy the app with the check-point restore
+with ShinyProxy see:
+[run_app.R](For%20instruction%20on%20how%20to%20run%20the%20development%20version%20see%20%5Bdeploy/README.md%5D(deploy/README.md).)
