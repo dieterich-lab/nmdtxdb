@@ -32,6 +32,7 @@ app_ui <- function(request) {
             multiple = FALSE,
             options = list(create = FALSE)
           ),
+          br(),
           selectizeInput(
             inputId = "contrast_select",
             label = h3("Contrasts:"),
@@ -40,18 +41,37 @@ app_ui <- function(request) {
             options = list(
               create = FALSE,
               plugins = list("remove_button")
+            ),
+          ),
+          br(),
+          actionButton(
+            "selectall", "Select all",
+            icon = icon("check"),
+            style = "width: 100%; padding: 0; height: 30px"
+          ),
+          br(),
+          br(),
+          div(
+            actionButton(
+              "selectdefault", "Select default",
+              icon = icon("redo"),
+              style = "width: 100%; padding: 0; height: 30px"
             )
           ),
-          selectizeInput(
-            inputId = "cds_source_select",
-            label = h3("CDS sources:"),
-            choices = NULL,
-            multiple = TRUE,
-            options = list(
-              create = FALSE,
-              plugins = list("remove_button")
+          br(),
+          div(
+            selectizeInput(
+              inputId = "cds_source_select",
+              label = h3("CDS sources:"),
+              choices = NULL,
+              multiple = TRUE,
+              options = list(
+                create = FALSE,
+                plugins = list("remove_button")
+              ),
             )
           ),
+          br(),
           div(
             action_button(
               input_id = "action_button_feedback",
@@ -60,7 +80,7 @@ app_ui <- function(request) {
               '_blank')",
               icon = icon("comments"),
               label = "Feedback",
-              style = "width: 100%; padding: 0; height: 40px"
+              style = "width: 100%; padding: 0; height: 30px"
             )
           ),
           br(),
@@ -69,7 +89,7 @@ app_ui <- function(request) {
               input_id = "action_button_tutorial",
               icon = icon("question"),
               label = "Tutorial",
-              style = "width: 100%; padding: 0; height: 40px"
+              style = "width: 100%; padding: 0; height: 30px"
             )
           ),
         ),

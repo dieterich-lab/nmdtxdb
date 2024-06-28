@@ -29,14 +29,15 @@ app_server <- function(input, output, session) {
     selected = "SRSF2"
   )
 
-  updateSelectizeInput(
-    session,
-    "contrast_select",
-    choices = metadata,
-    options = list(
-      valueField = "contrasts",
-      labelField = "name",
-      render = I("{
+  contrast_select_case <- function(selected) {
+    updateSelectizeInput(
+      session,
+      "contrast_select",
+      choices = metadata,
+      options = list(
+        valueField = "contrasts",
+        labelField = "name",
+        render = I("{
         option: function(item, escape) {
           return '<div>'
             + '<strong>' + escape(item.Knockdown) + '</strong>'
@@ -49,10 +50,18 @@ app_server <- function(input, output, session) {
             + '</div>';
         }
       }")
-    ),
-    server = TRUE,
-    selected = INITIAL_CONTRAST,
-  )
+      ),
+      server = TRUE,
+      selected = selected,
+    )
+  }
+  contrast_select_case(INITIAL_CONTRAST)
+  observeEvent(input$selectall, {
+    contrast_select_case(metadata$contrasts)
+  })
+  observeEvent(input$selectdefault, {
+    contrast_select_case(INITIAL_CONTRAST)
+  })
 
   observeEvent(input$gene_select, {
     cds_choices <- db$anno %>%
