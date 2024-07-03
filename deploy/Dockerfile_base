@@ -22,6 +22,7 @@ RUN apt-get update \
     libglpk-dev \
     libbz2-dev \
     liblzma-dev \
+    libxml2-dev \
     strace \
     && rm -rf /var/lib/apt/lists/*
 
