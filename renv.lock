@@ -1680,6 +1680,11 @@
       "Version": "0.3.4",
       "Source": "Repository"
     },
+    "rintrojs": {
+      "Package": "rintrojs",
+      "Version": "0.3.4",
+      "Source": "Repository"
+    },
     "rlang": {
       "Package": "rlang",
       "Version": "1.1.2",
