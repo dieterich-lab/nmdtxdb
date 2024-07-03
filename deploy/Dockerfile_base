@@ -31,5 +31,5 @@ RUN useradd app \
     && chown app /app
 
 ENV RENV_VERSION "1.0.7"
-
+ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 RUN R -e "remotes::install_github('rstudio/renv@v$RENV_VERSION')"
