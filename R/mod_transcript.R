@@ -116,6 +116,7 @@ build_dotplot <- function(df, y_labs) {
 #' @importFrom patchwork plot_layout
 #' @import stringr
 #' @importFrom scales scientific
+#' @importFrom tidyr unnest
 #' @noRd
 mod_transcript_server <- function(id, db, tx, contrast, cds) {
   moduleServer(id, function(input, output, session) {

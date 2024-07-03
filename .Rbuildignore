@@ -12,3 +12,4 @@ $run_dev.*
 ^deploy$
 ^.*\.RDS$
 R/other/*.R
+R/write_db_tables.R

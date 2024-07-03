@@ -5,7 +5,7 @@
 \title{Plot a transcript on the cDNA coordiantes highlighting PTC containing
 transcripts}
 \usage{
-plot_annotation_cdna(bed12)
+plot_annotation_cdna(bed12, y_labs)
 }
 \description{
 Plot a transcript on the cDNA coordiantes highlighting PTC containing

@@ -1,5 +1,5 @@
 {
-  "bioconductor.version": [],
+  "bioconductor.version": "3.19",
   "external.libraries": [],
   "ignored.packages": [
     "nmdtx",
@@ -38,8 +38,6 @@
     "Depends",
     "LinkingTo"
   ],
-  "ppm.enabled": null,
-  "ppm.ignored.urls": [],
   "r.version": [],
   "snapshot.type": "implicit",
   "use.cache": true,

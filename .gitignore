@@ -7,3 +7,4 @@
 passwords.txt
 R/other/*.R
 *.RDS
+*.tar.gz

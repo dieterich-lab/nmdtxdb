@@ -370,10 +370,10 @@ with_tooltip <- function(value, tooltip) {
 #' @return A ggplot object displaying the boxplot with the highlighted gene.
 #'
 #' @examples
-# data <- data.frame(gene_name = c("Gene1", "Gene2", "Gene2"),
-#                    contrasts = c("Contrast1", "Contrast2", "Contrast2"),
-#                    log2FoldChange = c(1.5, -0.8, 2.2))
-# fc_boxplot(data, "Gene2", "Contrast2")
+#' data <- data.frame(gene_name = c("Gene1", "Gene2", "Gene2"),
+#'                    contrasts = c("Contrast1", "Contrast2", "Contrast2"),
+#'                    log2FoldChange = c(1.5, -0.8, 2.2))
+#' fc_boxplot(data, "Gene2", "Contrast2")
 #'
 #' @import dplyr
 #' @import ggplot2

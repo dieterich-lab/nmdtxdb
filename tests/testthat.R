@@ -7,9 +7,9 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(nmdtx)
+library(nmdtxdb)
 
-test_check("nmdtx")
+test_check("nmdtxdb")
 
 context("render_gene_card")
 
