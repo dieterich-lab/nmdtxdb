@@ -1,7 +1,7 @@
 #!/bin/bash
 export RENV_WATCHDOG_ENABLED=0
 
-Rscript -e 'renv::restore(); renv::install("markdown", "plotly", "reshape2", "shinyjs", "tidyverse"); install.packages("app.tar.gz", repos = NULL, type ="source"); renv::isolate()'
+Rscript -e 'renv::restore(); install.packages("app.tar.gz", repos = NULL, type ="source"); renv::isolate()'
 
 echo "Running renv $(pidof  R)"
 setsid R -f rstart.R > /app/rlogs.log 2>&1 &

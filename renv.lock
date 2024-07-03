@@ -1189,6 +1189,11 @@
       ],
       "Hash": "7ce2733a9826b3aeb1775d56fd305472"
     },
+    "markdown": {
+      "Package": "markdown",
+      "Version": "1.13",
+      "Source": "Repository"
+    },
     "memoise": {
       "Package": "memoise",
       "Version": "2.0.1",
@@ -1389,34 +1394,7 @@
     "plotly": {
       "Package": "plotly",
       "Version": "4.10.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "RColorBrewer",
-        "base64enc",
-        "crosstalk",
-        "data.table",
-        "digest",
-        "dplyr",
-        "ggplot2",
-        "htmltools",
-        "htmlwidgets",
-        "httr",
-        "jsonlite",
-        "lazyeval",
-        "magrittr",
-        "promises",
-        "purrr",
-        "rlang",
-        "scales",
-        "tibble",
-        "tidyr",
-        "tools",
-        "vctrs",
-        "viridisLite"
-      ],
-      "Hash": "a1ac5c03ad5ad12b9d1597e00e23c3dd"
+      "Source": "Repository"
     },
     "plyr": {
       "Package": "plyr",
@@ -1695,15 +1673,7 @@
     "reshape2": {
       "Package": "reshape2",
       "Version": "1.4.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "plyr",
-        "stringr"
-      ],
-      "Hash": "bb5996d0bd962d214a11140d77589917"
+      "Source": "Repository"
     },
     "rintrojs": {
       "Package": "rintrojs",
@@ -1952,15 +1922,7 @@
     "shinyjs": {
       "Package": "shinyjs",
       "Version": "2.1.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "digest",
-        "jsonlite",
-        "shiny"
-      ],
-      "Hash": "802e4786b353a4bb27116957558548d5"
+      "Source": "Repository"
     },
     "sourcetools": {
       "Package": "sourcetools",
