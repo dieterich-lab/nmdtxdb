@@ -8,7 +8,7 @@ COPY .Rprofile .Rprofile
 COPY renv/activate.R renv/activate.R
 COPY renv/settings.json renv/settings.json
 
-COPY deploy/nmdtx_*.tar.gz app.tar.gz
+COPY deploy/nmdtxdb_*.tar.gz app.tar.gz
 COPY deploy/rstart.R rstart.R
 COPY deploy/restore.sh /restore.sh
 COPY deploy/launch_shiny_app.sh launch_shiny_app.sh
