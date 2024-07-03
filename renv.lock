@@ -757,19 +757,7 @@
       "RemoteUsername": "dzhang32",
       "RemoteRepo": "ggtranscript",
       "RemoteRef": "master",
-      "RemoteSha": "b99da0d455f2e900e06d25530f23aa26d9436db9",
-      "Requirements": [
-        "GenomeInfoDb",
-        "GenomicRanges",
-        "R",
-        "S4Vectors",
-        "dplyr",
-        "ggplot2",
-        "ggrepel",
-        "magrittr",
-        "rlang"
-      ],
-      "Hash": "3c8bf5f5571f717c5eb578de6867efef"
+      "RemoteSha": "b99da0d455f2e900e06d25530f23aa26d9436db9"
     },
     "gh": {
       "Package": "gh",
