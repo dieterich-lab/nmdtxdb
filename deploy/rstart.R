@@ -1,4 +1,4 @@
-library(nmdtx)
+library(nmdtxdb)
 options("golem.app.prod" = TRUE)
 db <- readRDS("/data/database.RDS")
 gc()
@@ -17,4 +17,4 @@ Sys.setenv('SHINYPROXY_USERNAME' = shiny_user, 'SHINYPROXY_USERGROUPS' = shiny_g
 print(Sys.getenv('SHINYPROXY_USERNAME'))
 print(Sys.getenv('SHINYPROXY_USERGROUPS'))
 options('shiny.port'=3838, shiny.host='0.0.0.0')
-nmdtx::run_app()
+nmdtxdb::run_app()

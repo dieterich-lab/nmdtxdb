@@ -22,6 +22,3 @@ system("scp renv.lock tbrittoborges@shinynew:apps/nmd-app/")
 # sudo mv criu_dumps/* /tmp_shiny/nmd_transcriptome_criu_dump/
 # sudo rmate /srv/shiny/prod/application.yml
 # sudo systemctl restart shinyproxy-prod
-#
-# cp canonical.bb ensembl.bb riboseq.bb openprot.bb /prj/trackhubs/nmd_transcriptome/hg38/
-# deploy_new_trackhub.sh /prj/trackhubs/nmd_transcriptome/

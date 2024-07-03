@@ -1,3 +1,7 @@
-# nmdtx 0.0.0.9000
+# nmdtdb
 
-* Added a `NEWS.md` file to track changes to the package.
+* added a feature for selecting all contrasts
+
+# nmdtxdb 0.0.0.9000
+
+* initial commit

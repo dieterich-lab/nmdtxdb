@@ -2,7 +2,7 @@
   "bioconductor.version": "3.19",
   "external.libraries": [],
   "ignored.packages": [
-    "nmdtx",
+    "nmdtxdb",
     "DelayedArray",
     "DelayedArray",
     "KEGGREST",

@@ -2,7 +2,7 @@
 #
 #
 golem::fill_desc(
-  pkg_name = "nmdtx",
+  pkg_name = "nmdtxdb",
   pkg_title = "NMD transcriptome",
   pkg_description = "PKG_DESC.",
   author_first_name = "Thiago",

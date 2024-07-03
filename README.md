@@ -18,7 +18,7 @@ Source code and data for
 
 ## Installation
 
-You can install the development version of nmdtx like so:
+You can install the development version of nmdtxdb like so:
 
 ``` r
 devtools::install_github("https://github.com/dieterich-lab/nmdtxdb")

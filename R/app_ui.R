@@ -138,7 +138,7 @@ golem_add_external_resources <- function() {
     favicon(),
     bundle_resources(
       path = app_sys("app/www"),
-      app_title = "nmdtx"
+      app_title = "nmdtxdb"
     ),
   )
 }

@@ -14,7 +14,7 @@ test_check("nmdtxdb")
 context("render_gene_card")
 
 test_that("render_gene_card returns a valid HTML character", {
-  output <- nmdtx:::render_gene_card("ENSG00000160201")
+  output <- nmdtxdb:::render_gene_card("ENSG00000160201")
   expect_is(output, "character",
     info = "The output of render_gene_card should be a character string"
   )
