@@ -4,12 +4,12 @@ aout <- pkgbuild::build(
   vignettes = FALSE,
 )
 
-install.packages("deploy/nmdtxdb_0.0.0.9000.tar.gz", repos = NULL, type ="source")
+install.packages(aout, repos = NULL, type ="source")
 db <- readRDS("database.RDS")
 devtools::test()
 
 system("scp database.RDS tbrittoborges@shinynew:apps/nmd-app/data/database.RDS")
-system("scp deploy/mdtxdb_0.0.0.9000.tar.gz tbrittoborges@shinynew:apps/nmd-app/deploy/")
+system(stringr::str_glue("scp {aout} tbrittoborges@shinynew:apps/nmd-app/deploy/"))
 system("scp renv.lock tbrittoborges@shinynew:apps/nmd-app/")
 
 # ssh shinynew
