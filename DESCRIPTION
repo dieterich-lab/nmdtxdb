@@ -10,7 +10,6 @@ Imports:
     dplyr,
     forcats,
     ggplot2,
-    ggtranscript,
     golem (>= 0.3.3),
     htmltools,
     httr,
