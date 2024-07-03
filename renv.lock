@@ -1097,18 +1097,8 @@
     },
     "htmlwidgets": {
       "Package": "htmlwidgets",
-      "Version": "1.6.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "grDevices",
-        "htmltools",
-        "jsonlite",
-        "knitr",
-        "rmarkdown",
-        "yaml"
-      ],
-      "Hash": "04291cc45198225444a397606810ac37"
+      "Version": "1.6.2",
+      "Source": "Repository"
     },
     "httpuv": {
       "Package": "httpuv",
@@ -1736,13 +1726,8 @@
     },
     "reactR": {
       "Package": "reactR",
-      "Version": "0.6.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "htmltools"
-      ],
-      "Hash": "10f4d661c235181648a5958c02c0382a"
+      "Version": "0.4.4",
+      "Source": "Repository"
     },
     "reactable": {
       "Package": "reactable",
