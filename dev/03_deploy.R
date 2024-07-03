@@ -4,7 +4,9 @@ aout <- pkgbuild::build(
   vignettes = FALSE,
 )
 
-install.packages(aout, repos = NULL, type ="source")
+system('mkdir -p renv/cellar/')
+system(stringr::str_glue("ln -s $PWD/{aout} renv/cellar/{basename(aout)}"))
+renv::install('nmdtxdb')
 db <- readRDS("database.RDS")
 devtools::test()
 
