@@ -1,6 +1,6 @@
 # NMDtxDB: Data-driven identification and annotation of human NMD target transcripts
 
-We employ a data-driven approach aimed at novel transcript discovery. Our primary objective is to identify isoforms that can activate the Nonsense-Mediated RNA Decay (NMD) machinery that are missing from reference databases and facilitate the access to this resource by a broad audience. Currently, the database offers evidence of premature stop codons (PTC) based on transcript structure. Accordingly, the feature (gene or transcript) abundances is also present. In that sense, NMDtxDB, in its current form, does not aim to replace the reference annotations, but offer an initial infrastructure to collect evidence of NMD activation and further characterize the rules of NDM. It's also important to present the resource on an easy-to-use platform, that can replicated by others. Thus, we hope this resource is used by a broad audience of researchers. This should help researchers to pinpoint relevant features from their genes of interest, its regulatory role in post-transcriptional regulation. 
+We use a data-driven approach to discover novel transcripts, focusing on identifying isoforms that are targets of Nonsense-Mediated RNA Decay (NMD) but are missing from reference databases. Our goal is to make this resource accessible to a wide audience. The database currently provides evidence of premature stop codons (PTC) based on transcript structure and includes feature (gene or transcript) abundances. NMDtxDB is not intended to replace reference annotations, but to collect evidence of NMD activation and further understand NMD rules. We aim to present this resource on an easy-to-use platform that others can replicate, hoping it will help researchers identify relevant features and understand their regulatory roles in post-transcriptional regulation.
 
 ## Introduction to NMDtxDB
 
@@ -10,21 +10,21 @@ NMDtxDB is a database dedicated to exploring transcripts that may be targeted by
 
 The NMDtxDB is constructed using data from cells lines depleted for key NMD-factors, offering a comprehensive insight into these NMD depletion conditions. We've also incorporated Nanopore sequencing, which improves on the detection of splicing isoforms, along with three CDS sources, that allow us to infer coding sequence (CDS) that are currently not annotated on the reference database. The figure below has a simplified overview of our workflow:
 
-![NMDtxDB Workflow](intro.jpeg)
+![__NMDtxDB Workflow__: Simplified scheme listing each step of our computational workflow.](intro.jpeg)
 
-Our work is open-source and available at GitHub. The Shiny App source is available at https://github.com/dieterich-lab/NMDtxDB. The workflow is available at https://github.com/dieterich-lab/nmd-wf. Both source codes are licensed under MIT.  We welcome contributions and feedback from the community to further improve  source code, and are considering new data sets and data modalities to enhance the database.   
+Our work is open-source and available at GitHub: https://github.com/dieterich-lab/nmd-wf. The Shiny App source is available at https://github.com/dieterich-lab/NMDtxDB. Both projects are licensed under MIT. We welcome contributions and feedback from the community to further improve our source code, and are considering new data sets and data modalities to enhance the database.
 
 A full description of the database and its construction can be found in our [manuscript](http://dx.doi.org/10.1261/rna.080066.124).
 
 ### Computational Workflow
 
-We've developed a unique computational workflow that addresses the need for transcriptome construction and premature stop codon (PTC) annotation. This workflow enables users to compare PTC status with transcript expression, helping identify unannotated NMD targets and providing a more comprehensive understanding of NMD activation.
+We’ve developed a unique computational workflow for transcriptome construction and premature stop codon (PTC) annotation. This allows users to compare PTC status with transcript expression, helping to identify unannotated NMD targets and understand NMD activation better.
 
-We highlight the challenges of building transcriptomes from RNA-seq dataset. The context of NMD makes this task even more challenging, as the pathway leads to the degradation of transcripts, which suppresses their detection under control conditions. The use of long read sequence alleviates some issues, but comes with it own limitations. Overall, we suggest users to be cautious when interpreting the database results, and taking the database evidences a form for prioritizing targets for experimental validation. 
+Building transcriptomes from RNA-seq datasets is challenging. Long-read sequencing helps, but has its limitations. NMD pathway suppression aids by enriching for putative NMD target transcripts. However, users should interpret database results cautiously when prioritizing targets for experimental validation.
 
-The multiple source for CDS allow users to explore for further characterization. Of note, besides the canonical CDS source, imported from Ensembl, the other Ribo-seq and OpenProt CDS sources are from external high-throughput datasets, and so require further checks. The Ensembl source is an adaptation of Ensembl-annotated CDS to novel transcripts. 
+Our workflow includes multiple CDS sources for further exploration. Besides the canonical CDS from Ensembl, we include Ribo-seq and OpenProt CDS annotations from high-throughput datasets. The Ensembl CDS is adapted to novel transcripts.
 
-Our approach is particularly useful in studying the impact of alternative splicing on NMD, as not all potential NMD substrates are degraded equally, and some may even escape degradation.
+Our approach is particularly useful for studying alternative splicing's impact on NMD, as not all NMD substrates are equally degraded, and some may escape degradation altogether.
 
 ### Front-end Application
 
@@ -32,4 +32,4 @@ Our web application is designed with a strong focus on simplicity and usability,
 
 The application is built using Shiny and Golem and is hosted with ShinyProxy via docker containers. In principle, this infra-structure could be used elsewhere, although we currently offer little support to external servers. We recently improved the user experience with a tutorial to guide users through the web application. Additionally, we optimized the front-end initialization time and database query performance to ensure a seamless user journey.
 
-Please give us some **Feedback** and help us improve further!
+Please give us some <a href="https://forms.gle/ZnaCwzNpFDPUHeh27" target="_blank"><b>Feedback</b></a>  and help us improve further!
