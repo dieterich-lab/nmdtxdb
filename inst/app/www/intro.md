@@ -10,7 +10,7 @@ NMDtxDB is a database dedicated to exploring transcripts that may be targeted by
 
 The NMDtxDB is constructed using data from cells lines depleted for key NMD-factors, offering a comprehensive insight into these NMD depletion conditions. We've also incorporated Nanopore sequencing, which improves on the detection of splicing isoforms, along with three CDS sources, that allow us to infer coding sequence (CDS) that are currently not annotated on the reference database. The figure below has a simplified overview of our workflow:
 
-![__NMDtxDB Workflow__: Simplified scheme listing each step of our computational workflow.](intro.jpeg)
+<img src="intro.jpeg" alt="Simplified scheme listing each step of our computational workflow." style="width:1000px;"/>
 
 Our work is open-source and available at GitHub: https://github.com/dieterich-lab/nmd-wf. The Shiny App source is available at https://github.com/dieterich-lab/NMDtxDB. Both projects are licensed under MIT. We welcome contributions and feedback from the community to further improve our source code, and are considering new data sets and data modalities to enhance the database.
 
