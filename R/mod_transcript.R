@@ -144,7 +144,7 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
         transcript_id %in% !!tx,
         contrasts %in% !!contrast
       ) %>%
-      select(transcript_id, contrasts, padj, log2fold) %>%
+      select(transcript_id, contrasts, padj, log2fold, exonBaseMean) %>%
       left_join(load_metadata(db), by = "contrasts")
 
     anno <- db[["anno"]] %>%
@@ -168,7 +168,7 @@ mod_transcript_server <- function(id, db, tx, contrast, cds) {
     output$table_transcript <- renderReactable({
       df <- df %>%
         select(
-          transcript_id, ref_transcript_name, cds_position, contrasts, everything()
+          transcript_id, ref_transcript_name, cds_position, contrasts, PTC, everything()
         ) %>%
         select(-c(name, itemRgb, gene_id, gene_name, ref_gene_id)) %>%
         filter(!is.na(cds_id))
@@ -330,6 +330,17 @@ function(cellInfo) {
             show = TRUE,
             width = 100,
             align = "right"
+          ),
+          exonBaseMean = colDef(
+            header = with_tooltip(
+              "base mean", "Transcript base mean."
+            ),
+            show = TRUE,
+            width = 100,
+            vAlign = "center",
+            align = "right",
+            format = colFormat(digits = 2),
+            filterable = FALSE
           ),
           log2fold = colDef(
             header = with_tooltip(
