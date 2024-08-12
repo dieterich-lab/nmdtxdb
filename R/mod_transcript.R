@@ -333,7 +333,7 @@ function(cellInfo) {
           ),
           exonBaseMean = colDef(
             header = with_tooltip(
-              "base mean", "Transcript base mean."
+              "base mean", "Transcript mean abundance."
             ),
             show = TRUE,
             width = 100,
